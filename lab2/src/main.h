@@ -4,3 +4,6 @@
 #include <vector>
 
 std::vector<std::vector<double>> read_points(const std::string& filename, int dim);
+
+int kmeans_rand();
+void kmeans_srand(unsigned int seed);

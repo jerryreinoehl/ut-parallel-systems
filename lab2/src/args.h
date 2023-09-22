@@ -10,7 +10,7 @@ class KmeansArgs {
     int num_clusters = 2;
     int num_dims = 10;
     int max_iters = 150;
-    int seed = 8675309;
+    unsigned int seed = 8675309;
     double threshold = 10e-5;
     std::string input_file;
 };
