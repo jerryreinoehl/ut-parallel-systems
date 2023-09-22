@@ -15,6 +15,10 @@ int main(int argc, char *argv[]) {
   int num_points;
   std::unique_ptr<double[]> points = read_points(args.input_file, args.num_dims, &num_points);
 
+  std::unique_ptr<double[]> centroids = get_centroids(
+    args.num_clusters, num_points, args.num_dims, points
+  );
+
   return 0;
 }
 
@@ -49,6 +53,21 @@ std::unique_ptr<double[]> read_points(const std::string& filename, int dim, int 
   }
 
   return points;
+}
+
+std::unique_ptr<double[]>
+get_centroids(int num_clusters, int num_points, int dim, const std::unique_ptr<double[]>& points) {
+  std::unique_ptr<double[]> clusters{new double[num_clusters * dim]};
+
+  int idx;
+  for (int i = 0; i < num_clusters; i++) {
+    idx = kmeans_rand() % num_points;
+    for (int j = 0; j < dim; j++) {
+      clusters[i * dim + j] = points[idx * dim + j];
+    }
+  }
+
+  return clusters;
 }
 
 static unsigned long int next = 1;
