@@ -22,8 +22,7 @@ int main(int argc, char *argv[]) {
 
   std::unique_ptr<int[]> labels{new int[num_points]};
 
-  for (int i = 0; i < 100; i++)
-    kmeans_sequential(args, num_points, centroids, points, labels);
+  kmeans_sequential(args, num_points, centroids, points, labels);
 
   return 0;
 }

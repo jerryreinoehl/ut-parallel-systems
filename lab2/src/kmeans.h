@@ -13,7 +13,17 @@ kmeans_sequential(
   std::unique_ptr<int[]>& labels
 );
 
-double vect_sq_dist(double *a, double *b, int dim);
+inline double vect_sq_dist(double *a, double *b, int dim) {
+  double dist = 0;
+  double diff = 0;
+
+  for (int i = 0; i < dim; i++) {
+    diff = a[i] - b[i];
+    dist += diff * diff;
+  }
+
+  return dist;
+}
 
 template <typename T>
 inline void vect_clear(T *a, int dim) {
