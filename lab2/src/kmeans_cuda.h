@@ -29,7 +29,7 @@ class cudaptr {
         exit(1);
       }
 
-      return {ptr};
+      return {ptr, size};
     }
 
     cudaptr static make_from(T *data, size_t size) {
@@ -46,7 +46,11 @@ class cudaptr {
       return ptr;
     }
 
-    cudaptr(T *t) : data_(t) {};
+    cudaptr static make_from(const std::unique_ptr<T[]>& ptr, size_t size) {
+      return cudaptr::make_from(ptr.get(), size);
+    }
+
+    cudaptr(T *t, size_t size) : data_(t), size_(size) {};
 
     ~cudaptr() {
       cudaFree(data_);
@@ -56,6 +60,21 @@ class cudaptr {
       return data_;
     }
 
+    void to_host(T *host) const {
+      cudaError_t err = cudaMemcpy(
+        host, data_, size_ * sizeof(T), cudaMemcpyDeviceToHost
+      );
+
+      if (err != cudaSuccess) {
+        printf("%s\n", cudaGetErrorString(err));
+      }
+    }
+
+    void to_host(std::unique_ptr<T[]>& ptr) const {
+      to_host(ptr.get());
+    }
+
   private:
     T *data_;
+    size_t size_;
 };
