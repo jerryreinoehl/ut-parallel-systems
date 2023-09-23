@@ -17,6 +17,10 @@ $(TARGET): $(OBJS)
 debug: CFLAGS = -g -O0 -Xcompiler -Wall,-Werror,-fsanitize=address
 debug: $(TARGET)
 
+.PHONY: prof
+prof: CFLAGS += -Xcompiler -pg
+prof: $(TARGET)
+
 .PHONY: clean
 clean:
 	rm *.o $(TARGET)
