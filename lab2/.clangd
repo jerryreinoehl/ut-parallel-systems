@@ -1,0 +1,4 @@
+If:
+  PathMatch: .*.h
+CompileFlags:
+  Add: [-xc++-header, -I/opt/cuda/targets/x86_64-linux/include]
