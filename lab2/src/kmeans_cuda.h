@@ -32,6 +32,20 @@ class cudaptr {
       return {ptr};
     }
 
+    cudaptr static make_from(T *data, size_t size) {
+      auto ptr = cudaptr::make(size);
+      cudaError_t err = cudaMemcpy(
+        ptr.get(), data, size * sizeof(T), cudaMemcpyHostToDevice
+      );
+
+      if (err != cudaSuccess) {
+        printf("%s\n", cudaGetErrorString(err));
+        exit(1);
+      }
+
+      return ptr;
+    }
+
     cudaptr(T *t) : data_(t) {};
 
     ~cudaptr() {
