@@ -10,8 +10,8 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-%.o: src/%.cpp
-	$(CC) $(CFLAGS) -c -o $@ $^
+%.o: src/%.cpp src/%.h
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY: debug
 debug: CFLAGS = -g -O0 -Xcompiler -Wall,-Werror,-fsanitize=address
