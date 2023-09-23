@@ -24,6 +24,12 @@ int main(int argc, char *argv[]) {
 
   kmeans_sequential(args, num_points, centroids, points, labels);
 
+  if (args.output_centroids_labels) {
+    print_centroids(centroids.get(), args.num_clusters, args.num_dims);
+  } else {
+    print_labels(labels.get(), num_points);
+  }
+
   return 0;
 }
 
@@ -73,6 +79,23 @@ get_centroids(int num_clusters, int num_points, int dim, const std::unique_ptr<d
   }
 
   return clusters;
+}
+
+void print_centroids(double *centroids, int num_centroids, int dim) {
+  for (int cent = 0; cent < num_centroids; cent++) {
+    printf("%d ", cent);
+    for (int d = 0; d < dim; d++) {
+      printf("%lf ", centroids[cent * dim + d]);
+    }
+    printf("\n");
+  }
+}
+
+void print_labels(int *labels, int num_points) {
+  printf("clusters:");
+  for (int pnt = 0; pnt < num_points; pnt++) {
+    printf(" %d", labels[pnt]);
+  }
 }
 
 static unsigned long int next = 1;
