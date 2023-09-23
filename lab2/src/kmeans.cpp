@@ -16,7 +16,7 @@ kmeans_sequential(
   int dim = args.num_dims;
   int iters = 0;
 
-  // Instread of sqrt'ing the distance every time we square the threshold once.
+  // Instead of sqrt'ing the distance every time we square the threshold once.
   double threshold = args.threshold * args.threshold;
 
   double dist;
@@ -70,8 +70,8 @@ kmeans_sequential(
       vect_div(&centroids[cent * dim], counts[cent], dim);
     }
 
-    // Have we converged? We have converged if each of the new centroids are
-    // within a distance `threshold` of their previous position.
+    // We have converged if each of the new centroids are within a distance
+    // `threshold` of their previous position.
     converged = true;
     for (cent = 0; cent < num_clusters; cent++) {
       dist = vect_sq_dist(&centroids[cent * dim], &centroids_prev[cent * dim], dim);
