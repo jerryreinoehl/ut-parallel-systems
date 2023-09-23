@@ -1,5 +1,6 @@
 #include "main.h"
 #include "args.h"
+#include "kmeans.h"
 
 #include <iostream>
 #include <fstream>
@@ -18,6 +19,11 @@ int main(int argc, char *argv[]) {
   std::unique_ptr<double[]> centroids = get_centroids(
     args.num_clusters, num_points, args.num_dims, points
   );
+
+  std::unique_ptr<int[]> labels{new int[num_points]};
+
+  for (int i = 0; i < 100; i++)
+    kmeans_sequential(args, num_points, centroids, points, labels);
 
   return 0;
 }

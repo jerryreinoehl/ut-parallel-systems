@@ -1,8 +1,8 @@
 CC := nvcc
 CFLAGS := -O3 -Xcompiler -Wall,-Werror
 
-OBJS = main.o args.o
-SRCS = main.cpp args.cpp
+OBJS = main.o args.o kmeans.o
+SRCS = main.cpp args.cpp kmeans.cpp
 TARGET := kmeans
 
 .PHONY: all
