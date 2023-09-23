@@ -69,22 +69,13 @@ kmeans_sequential(
       vect_div(&centroids[cent * dim], counts[cent], dim);
     }
 
-    // Print centroids
-    for (cent = 0; cent < num_clusters; cent++) {
-      vect_print(&centroids[cent * dim], dim);
-    }
-
     // Have we converged? We have converged if each of the new centroids are
     // within a distance `threshold` of their previous position.
     converged = true;
     for (cent = 0; cent < num_clusters; cent++) {
       dist = vect_sq_dist(&centroids[cent * dim], &centroids_prev[cent * dim], dim);
-      printf("dist for cent: %d is %0.8f\n", cent, dist);
       if (dist > threshold)
         converged = false;
     }
   }
-
-  printf("iters = %d\n", iters);
-  printf("=====================\n");
 }
