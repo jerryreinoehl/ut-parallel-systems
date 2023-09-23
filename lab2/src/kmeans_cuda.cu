@@ -4,9 +4,7 @@
 #include <memory>
 #include <stdio.h>
 
-__global__ void kmeans_cuda_kernel(int *a) {
-  *a = 32;
-}
+#include "kmeans.h" // REMOVE TODO
 
 void kmeans_cuda(
   const KmeansArgs& args,
@@ -17,16 +15,43 @@ void kmeans_cuda(
   int *num_iters,
   double *time_ms
 ) {
-  std::unique_ptr<int> a{new int};
-  *a = 5;
-  int *d_a;
+  int num_clusters = args.num_clusters;
+  int dim = args.num_dims;
 
-  cudaError_t cuda_err;
-  cuda_err = cudaMalloc((void**)&d_a, sizeof(int));
-  kmeans_cuda_kernel<<<1, 1>>>(d_a);
+  auto d_centroids = cudaptr<double>::make_from(centroids, num_clusters * dim);
+  auto d_points = cudaptr<double>::make_from(points, num_points * dim);
+  auto d_labels = cudaptr<int>::make_from(labels, num_points);
+
+  auto d_counts = cudaptr<int>::make(num_points);
+  auto d_centroids_prev = cudaptr<double>::make(num_clusters * dim);
+
+  kmeans_cuda_kernel<<<8, 256>>>(
+    dim,
+    num_points,
+    d_centroids.get(),
+    d_points.get(),
+    d_labels.get(),
+    d_counts.get()
+  );
+
   cudaDeviceSynchronize();
-  cudaMemcpy(a.get(), d_a, sizeof(int), cudaMemcpyDeviceToHost);
-  cudaFree(d_a);
 
-  printf("%d\n", *a);
+  d_centroids.to_host(centroids);
+  d_points.to_host(points);
+  d_labels.to_host(labels);
+}
+
+__global__ void kmeans_cuda_kernel(
+    int dim,
+    int num_points,
+    double *centroids,
+    double *points,
+    int *labels,
+    int *counts
+) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int span = blockDim.x;
+
+  // Reset point counts for each centroid.
+  cuda_vect_clear(counts + idx, span);
 }
