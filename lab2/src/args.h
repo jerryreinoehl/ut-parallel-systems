@@ -11,6 +11,6 @@ class KmeansArgs {
     int num_dims = 10;
     int max_iters = 150;
     unsigned int seed = 8675309;
-    double threshold = 10e-5;
+    double threshold = 1e-5;
     std::string input_file;
 };
