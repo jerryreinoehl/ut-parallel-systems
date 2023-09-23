@@ -10,7 +10,8 @@ kmeans_sequential(
   int num_points,
   std::unique_ptr<double[]>& centroids,
   std::unique_ptr<double[]>& points,
-  std::unique_ptr<int[]>& labels
+  std::unique_ptr<int[]>& labels,
+  int *num_iters
 );
 
 inline double vect_sq_dist(double *a, double *b, int dim) {

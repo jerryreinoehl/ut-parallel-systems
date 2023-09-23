@@ -9,7 +9,8 @@ kmeans_sequential(
   int num_points,
   std::unique_ptr<double[]>& centroids,
   std::unique_ptr<double[]>& points,
-  std::unique_ptr<int[]>& labels
+  std::unique_ptr<int[]>& labels,
+  int *num_iters
 ) {
   int num_clusters = args.num_clusters;
   int dim = args.num_dims;
@@ -78,4 +79,6 @@ kmeans_sequential(
         converged = false;
     }
   }
+
+  *num_iters = iters;
 }
