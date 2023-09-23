@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <string.h>
 #include <cmath>
+#include <time.h>
 
 void
 kmeans_sequential(
@@ -10,7 +11,8 @@ kmeans_sequential(
   std::unique_ptr<double[]>& centroids,
   std::unique_ptr<double[]>& points,
   std::unique_ptr<int[]>& labels,
-  int *num_iters
+  int *num_iters,
+  double *time_ms
 ) {
   int num_clusters = args.num_clusters;
   int dim = args.num_dims;
@@ -28,6 +30,8 @@ kmeans_sequential(
 
   std::unique_ptr<int[]> counts{new int[num_clusters]};
   std::unique_ptr<double[]> centroids_prev{new double[num_clusters * dim]};
+
+  clock_t start = clock(), diff;
 
   while (!converged && iters < args.max_iters) {
     iters++;
@@ -80,5 +84,7 @@ kmeans_sequential(
     }
   }
 
+  diff = clock() - start;
+  *time_ms = (double)diff * 1000 / CLOCKS_PER_SEC;
   *num_iters = iters;
 }

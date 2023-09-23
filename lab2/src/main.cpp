@@ -7,7 +7,6 @@
 #include <vector>
 #include <sstream>
 #include <memory>
-#include <time.h>
 
 int main(int argc, char *argv[]) {
   KmeansArgs args{argc, argv};
@@ -24,14 +23,11 @@ int main(int argc, char *argv[]) {
   std::unique_ptr<int[]> labels{new int[num_points]};
 
   int iters;
-  clock_t start = clock(), diff;
+  double time_ms;
 
-  kmeans_sequential(args, num_points, centroids, points, labels, &iters);
+  kmeans_sequential(args, num_points, centroids, points, labels, &iters, &time_ms);
 
-  diff = clock() - start;
-  double time_per_iter = (double)diff * 1000 / CLOCKS_PER_SEC / iters;
-
-  printf("%d,%lf\n", iters, time_per_iter);
+  printf("%d,%lf\n", iters, time_ms / iters);
 
   if (args.output_centroids_labels) {
     print_centroids(centroids.get(), args.num_clusters, args.num_dims);
