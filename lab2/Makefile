@@ -13,9 +13,16 @@ $(TARGET): $(OBJS)
 %.o: src/%.cpp src/%.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+%.o: src/%.cu src/%.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 .PHONY: debug
-debug: CFLAGS = -g -O0 -Xcompiler -Wall,-Werror,-fsanitize=address
+debug: CFLAGS = -g -O0 -Xcompiler -Wall,-Werror,-Wextra
 debug: $(TARGET)
+
+.PHONY: test
+test: CFLAGS = -g -O0 -Xcompiler -Wall
+test: $(TARGET)
 
 .PHONY: prof
 prof: CFLAGS += -Xcompiler -pg
@@ -23,4 +30,4 @@ prof: $(TARGET)
 
 .PHONY: clean
 clean:
-	rm *.o $(TARGET)
+	rm -f *.o $(TARGET)
