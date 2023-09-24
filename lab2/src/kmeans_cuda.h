@@ -85,6 +85,16 @@ class cudaptr {
       to_host(ptr.get());
     }
 
+    void copy_to(cudaptr<T>& ptr) {
+      cudaError_t err;
+      err = cudaMemcpy(ptr.get(), data_, size_ * sizeof(T), cudaMemcpyDeviceToDevice);
+
+      if (err != cudaSuccess) {
+        printf("%s\n", cudaGetErrorString(err));
+        exit(1);
+      }
+    }
+
     // Zeroize this block of memory.
     void zero() {
       cudaError_t err = cudaMemset(data_, 0, size_ * sizeof(T));
