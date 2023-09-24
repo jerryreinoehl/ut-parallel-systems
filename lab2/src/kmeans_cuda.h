@@ -15,7 +15,7 @@ void kmeans_cuda(
   double *time_ms
 );
 
-// Simple CUDA smart pointer.
+// CUDA smart pointer.
 template <typename T>
 class cudaptr {
   public:
