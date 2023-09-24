@@ -1,5 +1,5 @@
 CC := nvcc
-CFLAGS := -O3 -Xcompiler -Wall,-Werror
+CFLAGS := -arch sm_60 -O3 -Xcompiler -Wall,-Werror
 
 OBJS = main.o args.o kmeans.o kmeans_cuda.o
 SRCS = main.cpp args.cpp kmeans.cpp kmeans_cuda.cu
@@ -17,11 +17,11 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY: debug
-debug: CFLAGS = -g -O0 -Xcompiler -Wall,-Werror,-Wextra
+debug: CFLAGS = -arch sm_60 -g -O0 -Xcompiler -Wall,-Werror,-Wextra
 debug: $(TARGET)
 
 .PHONY: test
-test: CFLAGS = -g -O0 -Xcompiler -Wall
+test: CFLAGS = -arch sm_60 -g -O0 -Xcompiler -Wall
 test: $(TARGET)
 
 .PHONY: prof
