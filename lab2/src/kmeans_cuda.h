@@ -85,6 +85,8 @@ class cudaptr {
       to_host(ptr.get());
     }
 
+    // Copy device memory to device memory. `ptr` should point to a region
+    // with at least the same size of memory allocated by this cudaptr.
     void copy_to(cudaptr<T>& ptr) {
       cudaError_t err;
       err = cudaMemcpy(ptr.get(), data_, size_ * sizeof(T), cudaMemcpyDeviceToDevice);
