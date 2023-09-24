@@ -19,6 +19,7 @@ void kmeans_cuda(
 template <typename T>
 class cudaptr {
   public:
+    // Allocate memory on the device of size `size * sizeof(T)`.
     cudaptr static make(size_t size) {
       T *ptr;
 
@@ -32,6 +33,8 @@ class cudaptr {
       return {ptr, size};
     }
 
+    // Allocate memory on the device of size `size * sizeof(T)` and initialize
+    // with memory from host pointer `*data`.
     cudaptr static make_from(T *data, size_t size) {
       auto ptr = cudaptr::make(size);
       cudaError_t err = cudaMemcpy(
@@ -46,6 +49,8 @@ class cudaptr {
       return ptr;
     }
 
+    // Allocate memory on the device of size `size * sizeof(T)` and initialize
+    // with memory from host pointer `ptr.get()`.
     cudaptr static make_from(const std::unique_ptr<T[]>& ptr, size_t size) {
       return cudaptr::make_from(ptr.get(), size);
     }
@@ -56,10 +61,13 @@ class cudaptr {
       cudaFree(data_);
     };
 
+    // Returns the underlying pointer to device memory.
     T *get() {
       return data_;
     }
 
+    // Copy device memory to host memory. `*host` should point to a region
+    // with at least the same size of memory allocated by this cudaptr.
     void to_host(T *host) const {
       cudaError_t err = cudaMemcpy(
         host, data_, size_ * sizeof(T), cudaMemcpyDeviceToHost
@@ -71,10 +79,13 @@ class cudaptr {
       }
     }
 
+    // Copy device memory to host memory. `ptr` should point to a region
+    // with at least the same size of memory allocated by this cudaptr.
     void to_host(std::unique_ptr<T[]>& ptr) const {
       to_host(ptr.get());
     }
 
+    // Zeroize this block of memory.
     void zero() {
       cudaError_t err = cudaMemset(data_, 0, size_ * sizeof(T));
 
