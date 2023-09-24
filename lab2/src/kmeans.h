@@ -50,10 +50,23 @@ inline void vect_div(double *a, double div, int dim) {
   }
 }
 
-inline void vect_print(double *a, int dim) {
+template <typename T>
+inline void vect_print(T *a, int dim);
+
+template <>
+inline void vect_print<double>(double *a, int dim) {
   printf("[");
   for (int i = 0; i < dim - 1; i++) {
     printf("%0.5f ", a[i]);
   }
   printf("%0.5f]\n", a[dim - 1]);
+}
+
+template <>
+inline void vect_print<int>(int *a, int dim) {
+  printf("[");
+  for (int i = 0; i < dim - 1; i++) {
+    printf("%d ", a[i]);
+  }
+  printf("%d]\n", a[dim - 1]);
 }
