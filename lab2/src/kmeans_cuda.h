@@ -67,11 +67,21 @@ class cudaptr {
 
       if (err != cudaSuccess) {
         printf("%s\n", cudaGetErrorString(err));
+        exit(1);
       }
     }
 
     void to_host(std::unique_ptr<T[]>& ptr) const {
       to_host(ptr.get());
+    }
+
+    void zero() {
+      cudaError_t err = cudaMemset(data_, 0, size_ * sizeof(T));
+
+      if (err != cudaSuccess) {
+        printf("%s\n", cudaGetErrorString(err));
+        exit(1);
+      }
     }
 
   private:
