@@ -42,6 +42,9 @@ inline void vect_add(T *a, T *b, int dim) {
 }
 
 inline void vect_div(double *a, double div, int dim) {
+  if (div == 0)
+    return;
+
   for (int i = 0; i < dim; i++) {
     a[i] /= div;
   }
