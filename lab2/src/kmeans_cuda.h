@@ -5,15 +5,33 @@
 #include <memory>
 #include <cuda_runtime_api.h>
 
-void kmeans_cuda(
-  const KmeansArgs& args,
-  int num_points,
-  std::unique_ptr<double[]>& centroids,
-  std::unique_ptr<double[]>& points,
-  std::unique_ptr<int[]>& labels,
-  int *num_iters,
-  double *time_ms
-);
+class CudaArena {
+  public:
+    CudaArena(size_t size) : size_(size) {
+      cudaError_t err = cudaMalloc(&data_, size_);
+
+      if (err != cudaSuccess) {
+        printf("%s\n", cudaGetErrorString(err));
+        exit(1);
+      }
+    }
+
+    ~CudaArena() {
+      cudaFree(data_);
+    }
+
+    template <typename T>
+    T *alloc(size_t size) {
+      T *ptr = static_cast<T*>(data_);
+      data_ = (char*)data_ + (size * sizeof(T));
+      return ptr;
+    }
+
+  private:
+    void *data_;
+    size_t size_;
+
+};
 
 // CUDA smart pointer.
 template <typename T>
