@@ -51,6 +51,13 @@ class cudaptr {
       return {ptr, size};
     }
 
+    // Allocate memory on the device of size `size * sizeof(T)` from
+    // `CudaArena`, `arena`.
+    cudaptr static make(CudaArena& arena, size_t size) {
+      T *ptr = arena.alloc<T>(size);
+      return {ptr, size};
+    }
+
     // Allocate memory on the device of size `size * sizeof(T)` and initialize
     // with memory from host pointer `*data`.
     cudaptr static make_from(T *data, size_t size) {
@@ -73,10 +80,55 @@ class cudaptr {
       return cudaptr::make_from(ptr.get(), size);
     }
 
+    // Allocate memory on the device of size `size * sizeof(T)` and initialize
+    // with memory from host pointer `*data`.
+    cudaptr static make_from(CudaArena& arena, T *data, size_t size) {
+      auto ptr = cudaptr::make(arena, size);
+      cudaError_t err = cudaMemcpy(
+        ptr.get(), data, size * sizeof(T), cudaMemcpyHostToDevice
+      );
+
+      if (err != cudaSuccess) {
+        printf("%s\n", cudaGetErrorString(err));
+        exit(1);
+      }
+
+      return ptr;
+    }
+
+    // Allocate memory on the device of size `size * sizeof(T)` and initialize
+    // with memory from host pointer `ptr.get()`.
+    cudaptr static make_from(CudaArena& arena, const std::unique_ptr<T[]>& ptr, size_t size) {
+      return cudaptr::make_from(arena, ptr.get(), size);
+    }
+
+    // Allocate memory on the device of size `size * sizeof(T)` and initialize
+    // with memory from host pointer `*data`.
+    cudaptr static async_make_from(CudaArena& arena, T *data, size_t size, cudaStream_t stream) {
+      auto ptr = cudaptr::make(arena, size);
+      cudaError_t err = cudaMemcpyAsync(
+        ptr.get(), data, size * sizeof(T), cudaMemcpyHostToDevice, stream
+      );
+
+      if (err != cudaSuccess) {
+        printf("%s\n", cudaGetErrorString(err));
+        exit(1);
+      }
+
+      return ptr;
+    }
+
+    // Allocate memory on the device of size `size * sizeof(T)` and initialize
+    // with memory from host pointer `ptr.get()`.
+    cudaptr static async_make_from(CudaArena& arena, const std::unique_ptr<T[]>& ptr, size_t size, cudaStream_t stream) {
+      return cudaptr::async_make_from(arena, ptr.get(), size, stream);
+    }
+
     cudaptr(T *t, size_t size) : data_(t), size_(size) {};
+    cudaptr(void *t, size_t size) : data_(static_cast<T*>(t)), size_(size) {};
 
     ~cudaptr() {
-      cudaFree(data_);
+      //cudaFree(data_);
     };
 
     // Returns the underlying pointer to device memory.
@@ -101,6 +153,22 @@ class cudaptr {
     // with at least the same size of memory allocated by this cudaptr.
     void to_host(std::unique_ptr<T[]>& ptr) const {
       to_host(ptr.get());
+    }
+
+    // Copy host memory to device memory.
+    void from_host(T *host) {
+      cudaError_t err;
+      err = cudaMemcpy(data_, host, size_ * sizeof(T), cudaMemcpyHostToDevice);
+
+      if (err != cudaSuccess) {
+        printf("%s\n", cudaGetErrorString(err));
+        exit(1);
+      }
+    }
+
+    // Copy host memory to device memory.
+    void from_host(const std::unique_ptr<T[]>& ptr) {
+      from_host(ptr.get());
     }
 
     // Copy device memory to device memory. `ptr` should point to a region
