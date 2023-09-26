@@ -29,18 +29,6 @@ __global__ void kmeans_check_convergence(
   int dim
 );
 
-template <typename T>
-__device__ void cuda_vect_clear(T *vect, int dim) {
-  for (int i = 0; i < dim; i++)
-    vect[i] = 0;
-}
-
-__device__ double cuda_vect_sq_dist(double *a, double *b, int dim);
-
-__device__ void cuda_vect_atomic_add(double *dest, double *addend, int dim);
-
-__device__ void cuda_vect_add(double *dest, double *addend, int dim);
-
 __global__ void kmeans_calculate_point_component_distances(
   double *points,
   double *centroids,

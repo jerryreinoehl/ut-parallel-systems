@@ -1,15 +1,14 @@
-#include "kmeans_cuda.h"
+#include "kmeans_shmem.cuh"
 #include "args.h"
 
 #include <memory>
 #include <stdio.h>
 #include "cudaptr.h"
 #include "cudaarena.h"
-#include "cudavect.cuh"
 
 #include "kmeans.h" // REMOVE TODO
 
-void kmeans_cuda(
+void kmeans_shmem(
   const KmeansArgs& args,
   int num_points,
   std::unique_ptr<double[]>& centroids,
@@ -55,7 +54,7 @@ void kmeans_cuda(
     d_centroids.copy_to(d_centroids_prev);
     d_centroids.zero();
 
-    kmeans_label<<<(num_points + blk - 1)/blk, blk>>>(
+    kmeans_shmem_label<<<(num_points + blk - 1)/blk, blk>>>(
       dim,
       num_points,
       num_clusters,
@@ -66,11 +65,11 @@ void kmeans_cuda(
       d_counts.get()
     );
 
-    kmeans_div_centroids_by_count<<<(centroid_components + blk - 1)/blk, blk>>>(
+    kmeans_shmem_div_centroids_by_count<<<(centroid_components + blk - 1)/blk, blk>>>(
       d_centroids.get(), d_counts.get(), num_clusters, dim
     );
 
-    kmeans_check_convergence<<<(num_clusters + blk - 1)/num_clusters, blk>>>(
+    kmeans_shmem_check_convergence<<<(num_clusters + blk - 1)/num_clusters, blk>>>(
       d_centroids.get(),
       d_centroids_prev.get(),
       num_clusters,
@@ -101,100 +100,7 @@ void kmeans_cuda(
   cudaEventDestroy(end);
 }
 
-__global__ void kmeans_calculate_point_component_distances(
-  double *points,
-  double *centroids,
-  double *components,
-  int num_points,
-  int num_clusters,
-  int dim
-) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  int pnt = (idx / dim) % num_points;
-  int cent = idx / (num_points * dim);
-  int comp = idx % dim;
-
-  if (idx >= num_points * num_clusters * dim)
-    return;
-
-  double diff = points[pnt * dim + comp] - centroids[cent * dim + comp];
-  components[idx] = diff * diff;
-}
-
-__global__ void kmeans_sum_component_diffs(
-  double *components,
-  int num_points,
-  int num_clusters,
-  int dim
-) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  int pnt = idx % num_points;
-  int cent = idx / num_points;
-
-  if (idx >= num_points * num_clusters)
-    return;
-
-  double *sumptr = &components[(cent * num_points * dim) + (pnt * dim)];
-  double sum = 0;
-
-  for (int i = 0; i < dim; i++) {
-    sum += sumptr[i];
-  }
-
-  *sumptr = sum;
-}
-
-__global__ void kmeans_select_labels(
-  double *components,
-  int *labels,
-  int *counts,
-  int num_points,
-  int num_clusters,
-  int dim
-) {
-  int pnt = blockIdx.x * blockDim.x + threadIdx.x;
-
-  if (pnt >= num_points)
-    return;
-
-  int cent, min_cent;
-  double dist, min_dist;
-
-  min_cent = 0;
-  min_dist = components[pnt * dim];
-
-  for (cent = 1; cent < num_clusters; cent++) {
-    dist = components[(pnt * dim) + (cent * num_points * dim)];
-    if (dist < min_dist) {
-      min_dist = dist;
-      min_cent = cent;
-    }
-  }
-
-  labels[pnt] = min_cent;
-  atomicAdd(&counts[min_cent], 1);
-}
-
-__global__ void kmeans_calc_new_centroids(
-  double *centroids,
-  double *points,
-  int *labels,
-  int num_clusters,
-  int num_points,
-  int dim
-) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  int pnt = idx / dim;
-  int comp = idx % dim;
-  int cent = labels[pnt];
-
-  if (idx >= num_points * dim)
-    return;
-
-  atomicAdd(&centroids[cent * dim + comp], points[pnt * dim + comp]);
-}
-
-__global__ void kmeans_label(
+__global__ void kmeans_shmem_label(
     int dim,
     int num_points,
     int num_clusters,
@@ -214,11 +120,11 @@ __global__ void kmeans_label(
 
   // Calculate closest centroid for each point and number of points mapped
   // to each centroid.
-  min_dist = cuda_vect_sq_dist(&points[pnt * dim], &centroids_prev[0], dim);
+  min_dist = shmem_vect_sq_dist(&points[pnt * dim], &centroids_prev[0], dim);
   min_cent = 0;
 
   for (cent = 1; cent < num_clusters; cent++) {
-    dist = cuda_vect_sq_dist(&points[pnt * dim], &centroids_prev[cent * dim], dim);
+    dist = shmem_vect_sq_dist(&points[pnt * dim], &centroids_prev[cent * dim], dim);
     if (dist < min_dist) {
       min_dist = dist;
       min_cent = cent;
@@ -228,10 +134,10 @@ __global__ void kmeans_label(
   labels[pnt] = min_cent;
   atomicAdd(&counts[min_cent], 1);
 
-  cuda_vect_atomic_add(&centroids[min_cent * dim], &points[pnt * dim], dim);
+  shmem_vect_atomic_add(&centroids[min_cent * dim], &points[pnt * dim], dim);
 }
 
-__global__ void kmeans_div_centroids_by_count(
+__global__ void kmeans_shmem_div_centroids_by_count(
   double *centroids, int *counts, int num_clusters, int dim
 ) {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -244,7 +150,7 @@ __global__ void kmeans_div_centroids_by_count(
     centroids[idx] /= counts[cent];
 }
 
-__global__ void kmeans_check_convergence(
+__global__ void kmeans_shmem_check_convergence(
   double *centroids,
   double *centroids_prev,
   int num_clusters,
@@ -258,7 +164,31 @@ __global__ void kmeans_check_convergence(
   if (cent >= num_clusters)
     return;
 
-  dist = cuda_vect_sq_dist(&centroids[cent * dim], &centroids_prev[cent * dim], dim);
+  dist = shmem_vect_sq_dist(&centroids[cent * dim], &centroids_prev[cent * dim], dim);
   if (dist < threshold_sq)
     atomicAdd(converged, 1);
+}
+
+__device__ double shmem_vect_sq_dist(double *a, double *b, int dim) {
+  double dist = 0;
+  double diff = 0;
+
+  for (int i = 0; i < dim; i++) {
+    diff = a[i] - b[i];
+    dist += diff * diff;
+  }
+
+  return dist;
+}
+
+__device__ void shmem_vect_atomic_add(double *dest, double *addend, int dim) {
+  for (int i = 0; i < dim; i++) {
+    atomicAdd(&dest[i], addend[i]);
+  }
+}
+
+__device__ void shmem_vect_add(double *dest, double *addend, int dim) {
+  for (int i = 0; i < dim; i++) {
+    dest[i] += addend[i];
+  }
 }
