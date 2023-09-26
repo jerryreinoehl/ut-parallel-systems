@@ -63,17 +63,9 @@ void kmeans_cuda(
       d_counts.get()
     );
 
-    cudaDeviceSynchronize();
-
-    //d_counts.to_host(counts);
-    //printf("counts:\n");
-    //vect_print(counts.get(), num_clusters);
-
     kmeans_div_centroids_by_count<<<(centroid_components + blk - 1)/blk, blk>>>(
       d_centroids.get(), d_counts.get(), num_clusters, dim
     );
-
-    cudaDeviceSynchronize();
 
     kmeans_check_convergence<<<(num_clusters + blk - 1)/num_clusters, blk>>>(
       d_centroids.get(),
@@ -87,30 +79,6 @@ void kmeans_cuda(
     cudaDeviceSynchronize();
 
     d_converged.to_host(&converged);
-
-    //printf("converged: %d\n", converged);
-
-    //printf("labels:\n");
-    //vect_print(labels.get(), num_points);
-
-    //printf("points:\n");
-    //for (int pnt = 0; pnt < num_points; pnt++) {
-    //  vect_print(&points[pnt * dim], dim);
-    //}
-
-    //d_centroids_prev.to_host(centroids);
-    //printf(" === centroids prev ==========================\n");
-    //for (int cent = 0; cent < num_clusters; cent++) {
-    //  vect_print(&centroids[cent * dim], dim);
-    //}
-
-    //d_centroids.to_host(centroids);
-    //printf(" === centroids ===============================\n");
-    //for (int cent = 0; cent < num_clusters; cent++) {
-    //  vect_print(&centroids[cent * dim], dim);
-    //}
-
-    //printf("\n**********************************************\n");
   }
 
   cudaEventRecord(end);
