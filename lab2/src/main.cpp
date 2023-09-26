@@ -28,7 +28,10 @@ int main(int argc, char *argv[]) {
   int iters;
   double time_ms;
 
-  kmeans_sequential(args, num_points, centroids, points, labels, &iters, &time_ms);
+  if (args.impl == "cuda")
+    kmeans_cuda(args, num_points, centroids, points, labels, &iters, &time_ms);
+  else
+    kmeans_sequential(args, num_points, centroids, points, labels, &iters, &time_ms);
 
   printf("%d,%lf\n", iters, time_ms / iters);
 

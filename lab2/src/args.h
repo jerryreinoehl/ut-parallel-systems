@@ -13,4 +13,5 @@ class KmeansArgs {
     unsigned int seed = 8675309;
     double threshold = 1e-5;
     std::string input_file;
+    std::string impl;
 };

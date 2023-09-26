@@ -22,5 +22,7 @@ KmeansArgs::KmeansArgs(int argc, char *argv[]) {
       threshold = std::stod(*(++it));
     else if (arg == "-i")
       input_file = *(++it);
+    else if (arg == "--impl")
+      impl = *(++it);
   }
 }
