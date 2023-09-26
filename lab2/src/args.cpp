@@ -1,6 +1,7 @@
 #include "args.h"
 
 #include <string>
+#include <string.h>
 #include <iostream>
 
 KmeansArgs::KmeansArgs(int argc, char *argv[]) {
@@ -18,9 +19,15 @@ KmeansArgs::KmeansArgs(int argc, char *argv[]) {
       max_iters = std::stoi(*(++it));
     else if (arg == "-s")
       seed = std::stoi(*(++it));
-    else if (arg == "-t")
-      threshold = std::stod(*(++it));
-    else if (arg == "-i")
+    else if (arg == "-t") {
+      char *threshold_str = *(++it);
+      char *end;
+
+      threshold = strtod(threshold_str, &end);
+      printf("%ld\n", end - threshold_str);
+      if (static_cast<size_t>(end - threshold_str) < strlen(threshold_str))
+        threshold = 1e-5;
+    } else if (arg == "-i")
       input_file = *(++it);
     else if (arg == "--impl")
       impl = *(++it);
