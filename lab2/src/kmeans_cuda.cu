@@ -98,6 +98,99 @@ void kmeans_cuda(
   cudaEventDestroy(end);
 }
 
+__global__ void kmeans_calculate_point_component_distances(
+  double *points,
+  double *centroids,
+  double *components,
+  int num_points,
+  int num_clusters,
+  int dim
+) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int pnt = (idx / dim) % num_points;
+  int cent = idx / (num_points * dim);
+  int comp = idx % dim;
+
+  if (idx >= num_points * num_clusters * dim)
+    return;
+
+  double diff = points[pnt * dim + comp] - centroids[cent * dim + comp];
+  components[idx] = diff * diff;
+}
+
+__global__ void kmeans_sum_component_diffs(
+  double *components,
+  int num_points,
+  int num_clusters,
+  int dim
+) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int pnt = idx % num_points;
+  int cent = idx / num_points;
+
+  if (idx >= num_points * num_clusters)
+    return;
+
+  double *sumptr = &components[(cent * num_points * dim) + (pnt * dim)];
+  double sum = 0;
+
+  for (int i = 0; i < dim; i++) {
+    sum += sumptr[i];
+  }
+
+  *sumptr = sum;
+}
+
+__global__ void kmeans_select_labels(
+  double *components,
+  int *labels,
+  int *counts,
+  int num_points,
+  int num_clusters,
+  int dim
+) {
+  int pnt = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (pnt >= num_points)
+    return;
+
+  int cent, min_cent;
+  double dist, min_dist;
+
+  min_cent = 0;
+  min_dist = components[pnt * dim];
+
+  for (cent = 1; cent < num_clusters; cent++) {
+    dist = components[(pnt * dim) + (cent * num_points * dim)];
+    if (dist < min_dist) {
+      min_dist = dist;
+      min_cent = cent;
+    }
+  }
+
+  labels[pnt] = min_cent;
+  atomicAdd(&counts[min_cent], 1);
+}
+
+__global__ void kmeans_calc_new_centroids(
+  double *centroids,
+  double *points,
+  int *labels,
+  int num_clusters,
+  int num_points,
+  int dim
+) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int pnt = idx / dim;
+  int comp = idx % dim;
+  int cent = labels[pnt];
+
+  if (idx >= num_points * dim)
+    return;
+
+  atomicAdd(&centroids[cent * dim + comp], points[pnt * dim + comp]);
+}
+
 __global__ void kmeans_label(
     int dim,
     int num_points,
