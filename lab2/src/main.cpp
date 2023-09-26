@@ -1,6 +1,7 @@
 #include "main.h"
 #include "args.h"
 #include "kmeans.h"
+#include "kmeans_cuda.h"
 
 #include <iostream>
 #include <fstream>
@@ -9,6 +10,8 @@
 #include <memory>
 
 int main(int argc, char *argv[]) {
+  cudaFreeAsync(0, 0); // Initial CUDA context creation as soon as possible.
+
   KmeansArgs args{argc, argv};
 
   kmeans_srand(args.seed);
