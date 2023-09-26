@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <stdio.h>
+#include "cudaptr.h"
+#include "cudaarena.h"
 
 #include "kmeans.h" // REMOVE TODO
 
