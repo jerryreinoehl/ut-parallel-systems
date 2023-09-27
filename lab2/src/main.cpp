@@ -2,6 +2,7 @@
 #include "args.h"
 #include "kmeans.h"
 #include "kmeans_cuda.h"
+#include "kmeans_shmem.cuh"
 
 #include <iostream>
 #include <fstream>
@@ -30,6 +31,8 @@ int main(int argc, char *argv[]) {
 
   if (args.impl == "cuda")
     kmeans_cuda(args, num_points, centroids, points, labels, &iters, &time_ms);
+  else if (args.impl == "shmem")
+    kmeans_shmem(args, num_points, centroids, points, labels, &iters, &time_ms);
   else
     kmeans_sequential(args, num_points, centroids, points, labels, &iters, &time_ms);
 
