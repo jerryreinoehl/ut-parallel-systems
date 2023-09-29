@@ -2,6 +2,7 @@
 #pragma once
 
 #include "args.h"
+#include "cudaptr.h"
 #include <memory>
 #include <cuda_runtime_api.h>
 

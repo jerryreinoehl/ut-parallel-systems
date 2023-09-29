@@ -37,7 +37,7 @@ void kmeans_shmem(
 
   auto d_converged = cudaptr<int>::make(arena, 1);
 
-  const int blk = 64;
+  const int blk = 128;
   int centroid_components = num_clusters * dim;
 
   cudaEvent_t start, end;
@@ -54,7 +54,7 @@ void kmeans_shmem(
     d_centroids.copy_to(d_centroids_prev);
     d_centroids.zero();
 
-    kmeans_shmem_label<<<(num_points + blk - 1)/blk, blk>>>(
+    kmeans_shmem_label<<<(num_points + blk - 1)/blk, blk, 2 * num_clusters * dim * sizeof(double)>>>(
       dim,
       num_points,
       num_clusters,
@@ -111,30 +111,49 @@ __global__ void kmeans_shmem_label(
     int *counts
 ) {
   int pnt = blockIdx.x * blockDim.x + threadIdx.x;
-
-  if (pnt >= num_points)
-    return;
+  int pnt_blk = pnt % blockDim.x;
 
   int cent, min_cent;
   double dist, min_dist;
 
-  // Calculate closest centroid for each point and number of points mapped
-  // to each centroid.
-  min_dist = shmem_vect_sq_dist(&points[pnt * dim], &centroids_prev[0], dim);
-  min_cent = 0;
+  extern __shared__ double shared[];
+  double *sh_centroids_prev = shared;
+  double *sh_centroids = &shared[num_clusters * dim];
 
-  for (cent = 1; cent < num_clusters; cent++) {
-    dist = shmem_vect_sq_dist(&points[pnt * dim], &centroids_prev[cent * dim], dim);
-    if (dist < min_dist) {
-      min_dist = dist;
-      min_cent = cent;
+  if (pnt_blk < num_clusters) {
+    for (int i = 0; i < dim; i++) {
+      sh_centroids_prev[pnt_blk * dim + i] = centroids_prev[pnt_blk * dim + i];
+      sh_centroids[pnt_blk * dim + i] = 0;
     }
   }
 
-  labels[pnt] = min_cent;
-  atomicAdd(&counts[min_cent], 1);
+  __syncthreads();
 
-  shmem_vect_atomic_add(&centroids[min_cent * dim], &points[pnt * dim], dim);
+  if (pnt < num_points) {
+    // Calculate closest centroid for each point and number of points mapped
+    // to each centroid.
+    min_dist = shmem_vect_sq_dist(&points[pnt * dim], &sh_centroids_prev[0], dim);
+    min_cent = 0;
+
+    for (cent = 1; cent < num_clusters; cent++) {
+      dist = shmem_vect_sq_dist(&points[pnt * dim], &sh_centroids_prev[cent * dim], dim);
+      if (dist < min_dist) {
+        min_dist = dist;
+        min_cent = cent;
+      }
+    }
+
+    labels[pnt] = min_cent;
+    atomicAdd(&counts[min_cent], 1);
+
+    shmem_vect_atomic_add(&sh_centroids[min_cent * dim], &points[pnt * dim], dim);
+  }
+
+  __syncthreads();
+
+  if (pnt_blk < num_clusters) {
+    shmem_vect_atomic_add(&centroids[pnt_blk * dim], &sh_centroids[pnt_blk * dim], dim);
+  }
 }
 
 __global__ void kmeans_shmem_div_centroids_by_count(
