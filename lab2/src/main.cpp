@@ -3,12 +3,15 @@
 #include "kmeans.h"
 #include "kmeans_cuda.h"
 #include "kmeans_shmem.cuh"
+#include "kmeans_thrust.cuh"
 
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <sstream>
 #include <memory>
+
+#include <cuda_runtime.h>
 
 int main(int argc, char *argv[]) {
   cudaFreeAsync(0, 0); // Initial CUDA context creation as soon as possible.
@@ -33,6 +36,8 @@ int main(int argc, char *argv[]) {
     kmeans_cuda(args, num_points, centroids, points, labels, &iters, &time_ms);
   else if (args.impl == "shmem")
     kmeans_shmem(args, num_points, centroids, points, labels, &iters, &time_ms);
+  else if (args.impl == "thrust")
+    kmeans_thrust(args, num_points, centroids, points, labels, &iters, &time_ms);
   else
     kmeans_sequential(args, num_points, centroids, points, labels, &iters, &time_ms);
 
@@ -59,6 +64,7 @@ std::unique_ptr<double[]> read_points(const std::string& filename, int dim, int 
   ss >> *num_points;
 
   std::unique_ptr<double[]> points{new double[*num_points * dim]};
+
   double *it = points.get();
 
   while (!in.eof()) {

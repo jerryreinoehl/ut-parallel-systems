@@ -1,8 +1,8 @@
 CC := nvcc
 CFLAGS := -arch sm_60 -O3 -Xcompiler -Wall,-Werror
 
-OBJS = main.o args.o kmeans.o kmeans_cuda.o kmeans_shmem.o
-SRCS = main.cpp args.cpp kmeans.cpp kmeans_cuda.cu kmeans_shmem.cu
+OBJS = main.o args.o kmeans.o kmeans_cuda.o kmeans_shmem.o kmeans_thrust.o
+SRCS = main.cpp args.cpp kmeans.cpp kmeans_cuda.cu kmeans_shmem.cu kmeans_thrust.cu
 HEADERS = src/cudaptr.h src/cudaarena.h src/cudavect.cuh
 TARGET := kmeans
 
