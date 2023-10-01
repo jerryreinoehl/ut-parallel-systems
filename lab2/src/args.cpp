@@ -24,7 +24,6 @@ KmeansArgs::KmeansArgs(int argc, char *argv[]) {
       char *end;
 
       threshold = strtod(threshold_str, &end);
-      printf("%ld\n", end - threshold_str);
       if (static_cast<size_t>(end - threshold_str) < strlen(threshold_str))
         threshold = 1e-5;
     } else if (arg == "-i")
