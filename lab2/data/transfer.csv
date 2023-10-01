@@ -1,0 +1,4 @@
+impl, dt
+cuda, 59.84
+shmem, 51.20
+thrust, 39.22
