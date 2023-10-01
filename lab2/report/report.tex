@@ -1,0 +1,218 @@
+\documentclass{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage[skip=12pt]{parskip}
+\usepackage{sourcecodepro}
+
+\usepackage{graphicx}
+\usepackage{svg}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{shapes}
+
+\usepackage{color}
+\definecolor{orange}{rgb}{0.8,0.3,0.0}
+\definecolor{blue}{rgb}{0.2,0.4,0.6}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+
+\title{Lab 2 -- KMeans with CUDA}
+\author{Jerry Reinoehl}
+\date{CS380P Fall 2023}
+
+\begin{document}
+
+\maketitle{}
+
+\section{OS and Hardware Details}
+
+\begin{center}
+\begin{tabular}{|l|l|}
+  \hline
+  \multicolumn{2}{|c|}{\bf OS Details} \\ \hline
+  OS & Arch Linux        \\ \hline
+  Kernel & 6.5.4-arch2-1 \\ \hline
+  Architecture & x86\_64  \\ \hline
+  Memory & 80 GiB        \\ \hline
+  CUDA version & 12.2    \\ \hline
+  gcc version & 13.2.1   \\ \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|l|l|}
+  \hline
+  \multicolumn{2}{|c|}{\bf CPU Hardware Details} \\ \hline
+  Name & AMD Ryzen 5 1400 Quad-Core Processor \\ \hline
+  Cores & 4                                   \\ \hline
+  Threads & 8                                 \\ \hline
+  Clock rate & 3.2 GHz                        \\ \hline
+  Cache L1 & 96 KB (per core)                 \\ \hline
+  Cache L2 & 512 KB (per core)                \\ \hline
+  Cache L3 & 8 MB (shared)                    \\ \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|l|l|}
+  \hline
+  \multicolumn{2}{|c|}{\bf GPU Hardware Details} \\ \hline
+  Name & NVIDIA GeForce RTX 2060        \\ \hline
+  Architecture & Turing                 \\ \hline
+  Compute capability & 7.5              \\ \hline
+  Clock rate & 1,710 MHz                \\ \hline
+  Global memory & 6 GiB                 \\ \hline
+  Constant memory & 64 KiB              \\ \hline
+  Memory bus width & 192                \\ \hline
+  L2 cache size & 3 MiB                 \\ \hline
+  Shared memory per block & 48 KiB      \\ \hline
+  Multiprocessor count & 30             \\ \hline
+  Number of cores & 1920                \\ \hline
+  Max threads per multiprocessor & 1024 \\ \hline
+  Max threads per block & 1024          \\ \hline
+  Registers per block & 65536           \\ \hline
+  Warp size & 32                        \\ \hline
+\end{tabular}
+\end{center}
+
+\section{Performance Comparison}
+
+First we compare the time per iteration for each implementation.
+We see that as the number of points increases, the time for the sequential loop
+grows very quickly compared to the parallel implementations.
+This shows that the more iterations that are required for the solution to
+converge, the more speedup we can expect from the parallel implementations.
+
+\begin{center}
+  \includesvg[scale=0.8]{iter_time_1e-10.svg}
+\end{center}
+
+Next we compare the end-to-end runtimes of each implementation.
+We see that for a smaller number of points the sequential implementation is
+faster than any of the parallel implementations.
+As we increase the number of points or decrease the error threshold, we
+gain more from the parallel implementations because more time is spent in the
+kmeans loop (the portion that we can parallelize).
+
+\begin{center}
+  \includesvg[scale=0.8]{time_1e-5.svg}
+\end{center}
+
+When we decrease the threshold to 1e-10, we see a drastic reduction in runtime
+for 65,536 points, relative to the sequential implementation.
+The table below shows that for this problem, 117 iterations are required to
+converge to a solution.
+As the number of iterations increases we can expect to see much better relative
+performance of the parallel implementations.
+
+\begin{center}
+  \includesvg[scale=0.8]{time_1e-10.svg}
+\end{center}
+
+The ideal runtime is calculated by taking the sequential time of the sequential
+implementation and adding the ideal loop time.
+For example, we see that for problem size 65,536 with an error threshold of
+1e-5, the sequential implementation time is 1195.56 ms and the time per
+iteration is 23.2777 ms.
+To get the sequential time we take ${\rm total\_time} - {\rm time\_per\_iter} * {\rm num\_iters} =
+1195.56 - 23.2777 * 14 = 869.6722 {\rm ms}$.
+The ideal loop time is calculated by taking the sequential implementation loop
+time and dividing by the maximum number of current threads of the GPU.
+For this case that is 30 (multiprocessor count) * 1024 (max threads per
+multiprocessor) = 30720 maximum concurrent threads.
+So the best kmeans loop iteration time we could expect would be 23.2777 / 30720
+= 0.0008 ms.
+The total ideal time is then seq\_time + ideal\_iter\_time * num\_iters =
+869.6722 + 0.0008 * 14 = 869.68 ms.
+The CUDA with shared memory implementation is the closest to this ideal time,
+being 140.5 ms (14\% of its total time) slower.
+
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+  \bf{impl} & \bf{points} & \bf{threshold} & \bf{iters} & \bf{iter\_time} & \bf{time} \\ \hline
+
+seq &     2048 &       1e-5 &    18 &    0.2886 &  186.37 \\ \hline
+cuda &    2048 &       1e-5 &    18 &    0.1101 &  191.30 \\ \hline
+shmem &   2048 &       1e-5 &    18 &    0.1610 &  187.71 \\ \hline
+thrust &  2048 &       1e-5 &    18 &    0.2507 &  194.57 \\ \hline
+ideal &   2048 &       1e-5 &    18 &    0.0000 &  186.37 \\ \hline
+
+seq &    16384 &       1e-5 &    15 &    3.6963 &  361.44 \\ \hline
+cuda &   16384 &       1e-5 &    15 &    0.3697 &  353.39 \\ \hline
+shmem &  16384 &       1e-5 &    15 &    0.4794 &  313.91 \\ \hline
+thrust & 16384 &       1e-5 &    15 &    0.6245 &  342.47 \\ \hline
+ideal &  16384 &       1e-5 &    15 &    0.0001 &  306.00 \\ \hline
+
+seq &    65536 &       1e-5 &    14 &   23.2777 & 1195.56 \\ \hline
+cuda &   65536 &       1e-5 &    14 &    2.0839 & 1040.30 \\ \hline
+shmem &  65536 &       1e-5 &    14 &    2.7562 & 1010.18 \\ \hline
+thrust & 65536 &       1e-5 &    14 &    2.6303 & 1065.77 \\ \hline
+ideal &  65536 &       1e-5 &    14 &    0.0008 &  869.68 \\ \hline
+
+seq &     2048 &      1e-10 &    18 &    0.2877 &  188.44 \\ \hline
+cuda &    2048 &      1e-10 &    18 &    0.1064 &  197.88 \\ \hline
+shmem &   2048 &      1e-10 &    18 &    0.1883 &  184.41 \\ \hline
+thrust &  2048 &      1e-10 &    18 &    0.2331 &  193.27 \\ \hline
+ideal &   2048 &      1e-10 &    18 &    0.0000 &  183.26 \\ \hline
+
+seq &    16384 &      1e-10 &    25 &    3.8654 &  416.97 \\ \hline
+cuda &   16384 &      1e-10 &    25 &    0.3565 &  377.38 \\ \hline
+shmem &  16384 &      1e-10 &    25 &    0.4650 &  358.13 \\ \hline
+thrust & 16384 &      1e-10 &    25 &    0.6241 &  368.85 \\ \hline
+ideal &  16384 &      1e-10 &    25 &    0.0001 &  320.34 \\ \hline
+
+seq &    65536 &      1e-10 &   117 &   23.4670 & 3742.55 \\ \hline
+cuda &   65536 &      1e-10 &   117 &    1.5167 & 1203.70 \\ \hline
+shmem &  65536 &      1e-10 &   117 &    2.1053 & 1207.19 \\ \hline
+thrust & 65536 &      1e-10 &   117 &    1.9130 & 1219.80 \\ \hline
+ideal &  65536 &      1e-10 &   117 &    0.0008 &  997.00 \\ \hline
+\end{tabular}
+\end{center}
+
+The parallel implementations are not as fast as the ideal time due to time
+spent in data transfer and accessing memory.
+In fact, we see that the majority of the total runtime of the parallel
+implementations is spent in data transfer in the graph below.
+
+
+\begin{center}
+  \includesvg[scale=0.8]{transfer_time.svg}
+\end{center}
+
+In the graphs above we can see that the fastest parallel implementation is the
+CUDA with shared memory implementation, while the slowest is the thrust
+implementation.
+It makes sense that the slowest would be thrust due to having to create
+additional arrays to hold the indices of the points and centroids.
+This results in additional memory lookups and data transfers.
+However, the thrust implementation is still significantly faster than the
+sequential implementation and very close to the other parallel implementations.
+The thrust library allows the programmer to work at the algorithm level,
+without having to worry about shared memory, block size, grid dimensions, etc.,
+while still achieving great performance.
+
+It also makes sense that we see an improvement of runtime of the shared memory
+implementation over the basic CUDA implementation.
+By using shared memory we reduce the number of memory accesses to the slower
+global memory in exchange for the faster shared memory.
+However, when using shared memory we must be extra careful to load our shared
+memory and synchronize our threads.
+Much like the thrust implementation, there is a tradeoff between implementation
+complexity and performance.
+
+\section{Time Spend on Lab}
+
+\begin{center}
+  \begin{tabular}{|l|c|}
+    \hline
+    \multicolumn{2}{|c|}{\bf Time Breakdown} \\ \hline
+    Sequential implementation & 7 hrs       \\ \hline
+    CUDA basic implementation & 14 hrs      \\ \hline
+    CUDA shmem implementation & 5 hrs       \\ \hline
+    Thrust implementation & 12 hrs          \\ \hline
+    Report & 8 hrs                          \\ \hline
+    \bf{Total} & \bf{46 hrs}                \\ \hline
+  \end{tabular}
+\end{center}
+
+\end{document}
