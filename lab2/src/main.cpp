@@ -14,7 +14,8 @@
 #include <cuda_runtime.h>
 
 int main(int argc, char *argv[]) {
-  cudaFreeAsync(0, 0); // Initial CUDA context creation as soon as possible.
+  //cudaFreeAsync(0, 0); // Initial CUDA context creation as soon as possible.
+  cudaFree(0);           // `cudaFreeAsync` is a better choice but was not found on Codio.
 
   KmeansArgs args{argc, argv};
 
