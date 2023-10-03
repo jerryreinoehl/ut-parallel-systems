@@ -6,6 +6,8 @@ SRCS = main.cpp args.cpp kmeans.cpp kmeans_cuda.cu kmeans_shmem.cu kmeans_thrust
 HEADERS = src/cudaptr.h src/cudaarena.h src/cudavect.cuh
 TARGET := kmeans
 
+SUBMISSION := gerald_reinoehl_ger846_lab2.tar.gz
+
 .PHONY: all
 all: $(TARGET)
 $(TARGET): $(OBJS)
@@ -31,6 +33,13 @@ test: $(TARGET)
 .PHONY: prof
 prof: CFLAGS += -Xcompiler -pg
 prof: $(TARGET)
+
+.PHONY: submission
+submission: clean
+	tar -czvf $(SUBMISSION) \
+		--exclude='test/*' --exclude=$(SUBMISSION) --exclude-vcs \
+		--transform 's|^|gerald_reinoehl_ger846_lab2/|' \
+		*
 
 .PHONY: clean
 clean:
