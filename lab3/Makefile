@@ -7,7 +7,7 @@ $(TARGET): $(SOURCES)
 
 .PHONY: test
 test:
-	./scripts/test
+	@./scripts/test
 
 .PHONY: clean
 clean:
