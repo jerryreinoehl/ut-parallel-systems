@@ -44,10 +44,12 @@ func (b *BTree) insert(item Item) {
 
 	b.size++
 
-	if p == nil {
-		p = newNode(item)
+	if b.head == nil {
+		b.head = newNode(item)
 		return
 	}
+
+	p := b.head
 
 	for {
 		if item < p.value {
