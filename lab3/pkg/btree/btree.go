@@ -87,3 +87,14 @@ func (b *BTree) InOrderFunc(fn func(Item)) {
 		ptr = ptr.right
 	}
 }
+
+// Returns all the items in this btree as a slice, `[]Item`.
+func (b *BTree) Items() []Item {
+	result := make([]Item, 0, b.size)
+
+	b.InOrderFunc(func (item Item) {
+		result = append(result, item)
+	})
+
+	return result
+}

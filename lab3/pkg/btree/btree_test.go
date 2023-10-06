@@ -44,3 +44,18 @@ func TestInOrderFunc(t *testing.T) {
 		}
 	}
 }
+
+func TestInOrderSlice(t *testing.T) {
+	bt := NewBTree()
+	bt.Insert(30, 15, 10, 25, 40, 35, 50, 20, 100, 17)
+
+	expected := []Item{10, 15, 17, 20, 25, 30, 35, 40, 50, 100}
+	actual := bt.Items()
+
+	for i, item := range actual {
+		if item != expected[i] {
+			t.Errorf("btree.Items() failed. Expected %v, got %v\n", expected, actual)
+		}
+	}
+
+}
