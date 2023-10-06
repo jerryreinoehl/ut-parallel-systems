@@ -13,8 +13,8 @@ import (
 
 func main() {
 	numHashWorkers := flag.Uint("hash-workers", 1, "Number of hash workers")
-	numDataWorkers := flag.Uint("data-workers", 1, "Number of data workers")
-	numCompWorkers := flag.Uint("comp-workers", 1, "Number of comparison workers")
+	numDataWorkers := flag.Uint("data-workers", 0, "Number of data workers")
+	numCompWorkers := flag.Uint("comp-workers", 0, "Number of comparison workers")
 	flag.Parse()
 
 	fmt.Printf("numHashWorkers = %d\n", *numHashWorkers)
