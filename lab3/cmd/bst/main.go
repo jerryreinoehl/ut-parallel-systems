@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"bst/pkg/btree"
 	"bufio"
-	"os"
+	"fmt"
 	"log"
-	"strings"
+	"os"
 	"strconv"
+	"strings"
 )
 
 func main() {
