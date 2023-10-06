@@ -72,6 +72,7 @@ func (b *BTree) insert(item Item) {
 	}
 }
 
+// Traverse this btree in in-order fashion calling `fn` on each item.
 func (b *BTree) InOrderFunc(fn func(Item)) {
 	nodes := stack.NewStack()
 	ptr := b.head
