@@ -36,6 +36,7 @@ func main() {
 	trees := loadTrees(*input)
 	for _, tree := range trees {
 		fmt.Println(tree.Items())
+		fmt.Printf("hash: %d\n", hash(tree))
 	}
 }
 
@@ -67,4 +68,13 @@ func loadTrees(file string) []*btree.BTree[int] {
 	}
 
 	return trees
+}
+
+func hash(bt *btree.BTree[int]) int {
+	hash := 1
+	bt.InOrderFunc(func(value int) {
+		newValue := value + 2
+		hash = (hash * newValue + newValue) % 1000
+	})
+	return hash
 }
