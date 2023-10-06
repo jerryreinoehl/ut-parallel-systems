@@ -57,5 +57,4 @@ func TestInOrderSlice(t *testing.T) {
 			t.Errorf("btree.Items() failed. Expected %v, got %v\n", expected, actual)
 		}
 	}
-
 }
