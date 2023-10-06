@@ -3,7 +3,7 @@ package stack
 import "testing"
 
 func TestStackSize(t *testing.T) {
-	s := NewStack()
+	s := NewStack[int]()
 	expectedSize := 0
 
 	if s.Size() != expectedSize {
@@ -22,71 +22,90 @@ func TestStackSize(t *testing.T) {
 		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 
-	_ = s.Pop()
+	_, ok := s.Pop()
 	expectedSize = 5
+
+	if !ok {
+		t.Errorf("Pop() returned false for ok, expected true")
+	}
+
 	if s.Size() != expectedSize {
 		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 
-	_ = s.Pop()
-	_ = s.Pop()
-	_ = s.Pop()
+	_, ok = s.Pop()
+	_, ok = s.Pop()
+	_, ok = s.Pop()
 	expectedSize = 2
 
+	if !ok {
+		t.Errorf("Pop() returned false for ok, expected true")
+	}
+
 	if s.Size() != expectedSize {
 		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 
-	_ = s.Pop()
-	_ = s.Pop()
+	_, ok = s.Pop()
+	_, ok = s.Pop()
 	expectedSize = 0
+
+	if ok {
+		t.Errorf("Pop() returned true on empty stack, expected false")
+	}
+
 	if s.Size() != expectedSize {
 		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 
-	_ = s.Pop()
-	_ = s.Pop()
+	_, ok = s.Pop()
+	_, ok = s.Pop()
+
+	if ok {
+		t.Errorf("Pop() returned true on empty stack, expected false")
+	}
+
 	if s.Size() != expectedSize {
 		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 }
 
 func TestStackOrder(t *testing.T) {
-	s := NewStack()
+	s := NewStack[int]()
 
 	s.Push(1)
-	value := s.Pop().(int)
+	value, _ := s.Pop()
 	expected := 1
 	if value != expected {
 		t.Errorf("Expected Pop() to return value %d, but got %d", expected, value)
 	}
 
 	s.Push(10, 20, 30, 40, 50)
-	value = s.Pop().(int)
+	value, _ = s.Pop()
 	expected = 50
 	if value != expected {
 		t.Errorf("Expected Pop() to return value %d, but got %d", expected, value)
 	}
 
-	value = s.Pop().(int)
+	value, _ = s.Pop()
 	expected = 40
 	if value != expected {
 		t.Errorf("Expected Pop() to return value %d, but got %d", expected, value)
 	}
 
-	value = s.Pop().(int)
+	value, _ = s.Pop()
 	expected = 30
 	if value != expected {
 		t.Errorf("Expected Pop() to return value %d, but got %d", expected, value)
 	}
 
-	value = s.Pop().(int)
+	value, _ = s.Pop()
 	expected = 20
 	if value != expected {
 		t.Errorf("Expected Pop() to return value %d, but got %d", expected, value)
 	}
 
-	value = s.Pop().(int)
+	value, _ = s.Pop()
 	expected = 10
 	if value != expected {
 		t.Errorf("Expected Pop() to return value %d, but got %d", expected, value)
@@ -94,7 +113,7 @@ func TestStackOrder(t *testing.T) {
 }
 
 func TestStackEmpty(t *testing.T) {
-	s := NewStack()
+	s := NewStack[int]()
 
 	if !s.Empty() {
 		t.Errorf("Expected Empty() to return true, but got false")

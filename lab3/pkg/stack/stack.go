@@ -1,59 +1,60 @@
 package stack
 
-type any = interface{}
-
-type Stack struct {
+type Stack[T any] struct {
 	size int
-	head *node
+	head *node[T]
 }
 
-type node struct {
-	next  *node
-	value any
+type node[T any] struct {
+	next  *node[T]
+	value T
 }
 
-func NewStack() Stack {
-	return Stack{size: 0, head: nil}
+func NewStack[T any]() Stack[T] {
+	return Stack[T]{size: 0, head: nil}
 }
 
-func newNode(value any) *node {
-	return &node{next: nil, value: value}
+func newNode[T any](value T) *node[T] {
+	return &node[T]{next: nil, value: value}
 }
 
-func (s *Stack) Push(values ...any) {
+func (s *Stack[T]) Push(values ...T) {
 	for _, v := range values {
 		s.push(v)
 	}
 }
 
-func (s *Stack) push(value any) {
+func (s *Stack[T]) push(value T) {
 	s.size++
 
 	if s.head == nil {
-		s.head = newNode(value)
+		s.head = newNode[T](value)
 		return
 	}
 
-	node := newNode(value)
+	node := newNode[T](value)
 	node.next = s.head
 	s.head = node
 }
 
-func (s *Stack) Pop() any {
+func (s *Stack[T]) Pop() (T, bool) {
+	var value T
+
 	if s.size == 0 {
-		return nil
+		return value, false
 	}
 
 	s.size--
-	value := s.head.value
+	value = s.head.value
 	s.head = s.head.next
-	return value
+
+	return value, true
 }
 
-func (s *Stack) Empty() bool {
+func (s *Stack[T]) Empty() bool {
 	return s.size == 0
 }
 
-func (s *Stack) Size() int {
+func (s *Stack[T]) Size() int {
 	return s.size
 }
