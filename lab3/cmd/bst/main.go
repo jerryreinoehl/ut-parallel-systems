@@ -3,6 +3,7 @@ package main
 import (
 	"bst/pkg/btree"
 	"bufio"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +12,15 @@ import (
 )
 
 func main() {
+	numHashWorkers := flag.Uint("hash-workers", 1, "Number of hash goroutines")
+	numDataWorkers := flag.Uint("data-workers", 1, "Number of data goroutines")
+	numCompWorkers := flag.Uint("comp-workers", 1, "Number of comparison goroutines")
+	flag.Parse()
+
+	fmt.Printf("numHashWorkers = %d\n", *numHashWorkers)
+	fmt.Printf("numDataWorkers = %d\n", *numDataWorkers)
+	fmt.Printf("numCompWorkers = %d\n", *numCompWorkers)
+
 	bt := btree.NewBTree[int]()
 	bt.Insert(10, 23, 11, 5)
 	bt.Insert(10)
