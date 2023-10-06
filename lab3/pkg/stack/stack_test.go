@@ -50,8 +50,8 @@ func TestStackSize(t *testing.T) {
 	_, ok = s.Pop()
 	expectedSize = 0
 
-	if ok {
-		t.Errorf("Pop() returned true on empty stack, expected false")
+	if !ok {
+		t.Errorf("Pop() returned false for ok, expected true")
 	}
 
 	if s.Size() != expectedSize {
