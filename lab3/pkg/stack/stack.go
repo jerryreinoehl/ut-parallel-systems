@@ -3,7 +3,7 @@ package stack
 type any = interface{}
 
 type Stack struct {
-	Size int
+	size int
 	head *node
 }
 
@@ -13,7 +13,7 @@ type node struct {
 }
 
 func NewStack() Stack {
-	return Stack{Size: 0, head: nil}
+	return Stack{size: 0, head: nil}
 }
 
 func newNode(value any) *node {
@@ -27,7 +27,7 @@ func (s *Stack) Push(values ...any) {
 }
 
 func (s *Stack) push(value any) {
-	s.Size++
+	s.size++
 
 	if s.head == nil {
 		s.head = newNode(value)
@@ -40,16 +40,20 @@ func (s *Stack) push(value any) {
 }
 
 func (s *Stack) Pop() any {
-	if s.Size == 0 {
+	if s.size == 0 {
 		return nil
 	}
 
-	s.Size--
+	s.size--
 	value := s.head.value
 	s.head = s.head.next
 	return value
 }
 
 func (s *Stack) Empty() bool {
-	return s.Size == 0
+	return s.size == 0
+}
+
+func (s *Stack) Size() int {
+	return s.size
 }

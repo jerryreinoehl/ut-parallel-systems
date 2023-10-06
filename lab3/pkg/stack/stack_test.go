@@ -6,26 +6,26 @@ func TestStackSize(t *testing.T) {
 	s := NewStack()
 	expectedSize := 0
 
-	if s.Size != expectedSize {
-		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size)
+	if s.Size() != expectedSize {
+		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 
 	s.Push(0)
 	expectedSize = 1
-	if s.Size != expectedSize {
-		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size)
+	if s.Size() != expectedSize {
+		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 
 	s.Push(10, 20, 30, 40, 50)
 	expectedSize = 6
-	if s.Size != expectedSize {
-		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size)
+	if s.Size() != expectedSize {
+		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 
 	_ = s.Pop()
 	expectedSize = 5
-	if s.Size != expectedSize {
-		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size)
+	if s.Size() != expectedSize {
+		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 
 	_ = s.Pop()
@@ -33,21 +33,21 @@ func TestStackSize(t *testing.T) {
 	_ = s.Pop()
 	expectedSize = 2
 
-	if s.Size != expectedSize {
-		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size)
+	if s.Size() != expectedSize {
+		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 
 	_ = s.Pop()
 	_ = s.Pop()
 	expectedSize = 0
-	if s.Size != expectedSize {
-		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size)
+	if s.Size() != expectedSize {
+		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 
 	_ = s.Pop()
 	_ = s.Pop()
-	if s.Size != expectedSize {
-		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size)
+	if s.Size() != expectedSize {
+		t.Errorf("stack should have size %d but has size %d", expectedSize, s.Size())
 	}
 }
 
