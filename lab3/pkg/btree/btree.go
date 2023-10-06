@@ -2,45 +2,42 @@ package btree
 
 import (
 	"bst/pkg/stack"
+	"cmp"
 )
 
-// We should really use generics but are limited to go 1.12 here so just use
-// `int`.
-type Item int
-
-type BTree struct {
-	head *node
+type BTree[T cmp.Ordered] struct {
+	head *node[T]
 	size int
 }
 
-type node struct {
-	left  *node
-	right *node
-	value Item
+type node[T cmp.Ordered] struct {
+	left  *node[T]
+	right *node[T]
+	value T
 }
 
-func NewBTree() BTree {
-	return BTree{head: nil, size: 0}
+func NewBTree[T cmp.Ordered]() BTree[T] {
+	return BTree[T]{head: nil, size: 0}
 }
 
-func newNode(value Item) *node {
-	return &node{left: nil, right: nil, value: value}
+func newNode[T cmp.Ordered](value T) *node[T] {
+	return &node[T]{left: nil, right: nil, value: value}
 }
 
-func (b *BTree) Size() int {
+func (b *BTree[T]) Size() int {
 	return b.size
 }
 
 // Inserts items into the binary tree.
-func (b *BTree) Insert(items ...Item) {
+func (b *BTree[T]) Insert(items ...T) {
 	for _, item := range items {
 		b.insert(item)
 	}
 }
 
 // Inserts a single item into the binary tree.
-func (b *BTree) insert(item Item) {
-	var next *node = nil
+func (b *BTree[T]) insert(item T) {
+	var next *node[T] = nil
 
 	b.size++
 
@@ -73,8 +70,8 @@ func (b *BTree) insert(item Item) {
 }
 
 // Traverse this btree in in-order fashion calling `fn` on each item.
-func (b *BTree) InOrderFunc(fn func(Item)) {
-	nodes := stack.NewStack()
+func (b *BTree[T]) InOrderFunc(fn func(T)) {
+	nodes := stack.NewStack[*node[T]]()
 	ptr := b.head
 
 	for ptr != nil || !nodes.Empty() {
@@ -83,17 +80,17 @@ func (b *BTree) InOrderFunc(fn func(Item)) {
 			ptr = ptr.left
 		}
 
-		ptr = nodes.Pop().(*node)
+		ptr, _ = nodes.Pop()
 		fn(ptr.value)
 		ptr = ptr.right
 	}
 }
 
 // Returns all the items in this btree as a slice, `[]Item`.
-func (b *BTree) Items() []Item {
-	result := make([]Item, 0, b.size)
+func (b *BTree[T]) Items() []T {
+	result := make([]T, 0, b.size)
 
-	b.InOrderFunc(func(item Item) {
+	b.InOrderFunc(func (item T) {
 		result = append(result, item)
 	})
 

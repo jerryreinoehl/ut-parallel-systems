@@ -5,7 +5,7 @@ import (
 )
 
 func TestEmptyBTreeSize(t *testing.T) {
-	bt := NewBTree()
+	bt := NewBTree[int]()
 	expectedSize := 0
 
 	if bt.Size() != expectedSize {
@@ -28,11 +28,11 @@ func TestEmptyBTreeSize(t *testing.T) {
 }
 
 func TestInOrderFunc(t *testing.T) {
-	bt := NewBTree()
+	bt := NewBTree[int]()
 	values := make([]int, 0, 10)
 
 	bt.Insert(30, 15, 10, 25, 40, 35, 50, 20, 100, 17)
-	bt.InOrderFunc(func(i Item) {
+	bt.InOrderFunc(func(i int) {
 		values = append(values, int(i))
 	})
 
@@ -46,10 +46,10 @@ func TestInOrderFunc(t *testing.T) {
 }
 
 func TestInOrderSlice(t *testing.T) {
-	bt := NewBTree()
+	bt := NewBTree[int]()
 	bt.Insert(30, 15, 10, 25, 40, 35, 50, 20, 100, 17)
 
-	expected := []Item{10, 15, 17, 20, 25, 30, 35, 40, 50, 100}
+	expected := []int{10, 15, 17, 20, 25, 30, 35, 40, 50, 100}
 	actual := bt.Items()
 
 	for i, item := range actual {
