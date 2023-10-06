@@ -13,6 +13,10 @@ test:
 run:
 	go run ./cmd/bst
 
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
 .PHONY: clean
 clean:
 	rm -f $(TARGET)
