@@ -1,3 +1,3 @@
 module bst
 
-go 1.12.7
+go 1.21.1
