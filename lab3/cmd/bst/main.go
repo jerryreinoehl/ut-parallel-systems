@@ -12,9 +12,9 @@ import (
 )
 
 func main() {
-	numHashWorkers := flag.Uint("hash-workers", 1, "Number of hash goroutines")
-	numDataWorkers := flag.Uint("data-workers", 1, "Number of data goroutines")
-	numCompWorkers := flag.Uint("comp-workers", 1, "Number of comparison goroutines")
+	numHashWorkers := flag.Uint("hash-workers", 1, "Number of hash workers")
+	numDataWorkers := flag.Uint("data-workers", 1, "Number of data workers")
+	numCompWorkers := flag.Uint("comp-workers", 1, "Number of comparison workers")
 	flag.Parse()
 
 	fmt.Printf("numHashWorkers = %d\n", *numHashWorkers)
