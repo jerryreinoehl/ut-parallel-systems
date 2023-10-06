@@ -62,3 +62,19 @@ func (b *BTree) insert(item Item) {
 		p.right = newNode(item)
 	}
 }
+
+func (b *BTree) InOrderFunc(fn func(Item)) {
+	nodes := stack.NewStack()
+	ptr := b.head
+
+	for ptr != nil || !nodes.Empty() {
+		for ptr != nil {
+			nodes.Push(ptr)
+			ptr = ptr.left
+		}
+
+		ptr = nodes.Pop().(*node)
+		fn(ptr.value)
+		ptr = ptr.right
+	}
+}
