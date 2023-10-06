@@ -9,6 +9,10 @@ $(TARGET): $(SOURCES)
 test:
 	@./scripts/test
 
+.PHONY: run
+run:
+	go run ./cmd/bst
+
 .PHONY: clean
 clean:
 	rm -f $(TARGET)
