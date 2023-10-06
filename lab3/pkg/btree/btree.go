@@ -1,12 +1,16 @@
 package btree
 
+import (
+	"bst/pkg/stack"
+)
+
 // We should really use generics but are limited to go 1.12 here so just use
 // `int`.
 type Item int
 
 type BTree struct {
 	head *node
-	Size int
+	size int
 }
 
 type node struct {
@@ -16,11 +20,15 @@ type node struct {
 }
 
 func NewBTree() BTree {
-	return BTree{head: nil, Size: 0}
+	return BTree{head: nil, size: 0}
 }
 
 func newNode(value Item) *node {
 	return &node{left: nil, right: nil, value: value}
+}
+
+func (b *BTree) Size() int {
+	return b.size
 }
 
 // Inserts items into the binary tree.
@@ -34,8 +42,7 @@ func (b *BTree) Insert(items ...Item) {
 func (b *BTree) insert(item Item) {
 	var next *node = nil
 
-	p := b.head
-	b.Size++
+	b.size++
 
 	if p == nil {
 		p = newNode(item)
