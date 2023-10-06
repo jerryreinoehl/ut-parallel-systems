@@ -8,7 +8,7 @@ type Stack struct {
 }
 
 type node struct {
-	next *node
+	next  *node
 	value any
 }
 

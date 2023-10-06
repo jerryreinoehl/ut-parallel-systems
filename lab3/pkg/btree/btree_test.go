@@ -32,7 +32,7 @@ func TestInOrderFunc(t *testing.T) {
 	values := make([]int, 0, 10)
 
 	bt.Insert(30, 15, 10, 25, 40, 35, 50, 20, 100, 17)
-	bt.InOrderFunc(func (i Item) {
+	bt.InOrderFunc(func(i Item) {
 		values = append(values, int(i))
 	})
 

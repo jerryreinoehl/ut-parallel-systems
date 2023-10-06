@@ -93,7 +93,7 @@ func (b *BTree) InOrderFunc(fn func(Item)) {
 func (b *BTree) Items() []Item {
 	result := make([]Item, 0, b.size)
 
-	b.InOrderFunc(func (item Item) {
+	b.InOrderFunc(func(item Item) {
 		result = append(result, item)
 	})
 
