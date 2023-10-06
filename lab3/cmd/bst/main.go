@@ -15,7 +15,12 @@ func main() {
 	numHashWorkers := flag.Uint("hash-workers", 1, "Number of hash workers")
 	numDataWorkers := flag.Uint("data-workers", 0, "Number of data workers")
 	numCompWorkers := flag.Uint("comp-workers", 0, "Number of comparison workers")
+	input := flag.String("input", "", "Input file path")
 	flag.Parse()
+
+	if *input == "" {
+		log.Fatal("Must specify input")
+	}
 
 	fmt.Printf("numHashWorkers = %d\n", *numHashWorkers)
 	fmt.Printf("numDataWorkers = %d\n", *numDataWorkers)
@@ -28,7 +33,7 @@ func main() {
 	fmt.Println(bt.Size())
 	fmt.Printf("%v\n", bt.Items())
 
-	trees := loadTrees("data/simple.txt")
+	trees := loadTrees(*input)
 	for _, tree := range trees {
 		fmt.Println(tree.Items())
 	}
