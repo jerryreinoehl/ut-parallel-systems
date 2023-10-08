@@ -1,7 +1,6 @@
 package btree
 
 import (
-	"bst/pkg/stack"
 	"cmp"
 )
 
@@ -71,16 +70,18 @@ func (b *BTree[T]) insert(item T) {
 
 // Traverse this btree in in-order fashion calling `fn` on each item.
 func (b *BTree[T]) InOrderFunc(fn func(T)) {
-	nodes := stack.NewStack[*node[T]]()
+	nodes := make([]*node[T], 0, b.size)
 	ptr := b.head
 
-	for ptr != nil || !nodes.Empty() {
+	for ptr != nil || len(nodes) > 0 {
 		for ptr != nil {
-			nodes.Push(ptr)
+			nodes = append(nodes, ptr)
 			ptr = ptr.left
 		}
 
-		ptr, _ = nodes.Pop()
+		ptr = nodes[len(nodes)-1]
+		nodes = nodes[:len(nodes)-1]
+
 		fn(ptr.value)
 		ptr = ptr.right
 	}
