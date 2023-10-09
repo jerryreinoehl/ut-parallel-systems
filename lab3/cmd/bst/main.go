@@ -9,6 +9,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 )
 
 func main() {
@@ -18,26 +20,53 @@ func main() {
 	input := flag.String("input", "", "Input file path")
 	flag.Parse()
 
+	// Silence unused variable errors for now.
+	_ = numDataWorkers
+	_ = numCompWorkers
+
 	if *input == "" {
 		log.Fatal("Must specify input")
 	}
 
-	fmt.Printf("numHashWorkers = %d\n", *numHashWorkers)
-	fmt.Printf("numDataWorkers = %d\n", *numDataWorkers)
-	fmt.Printf("numCompWorkers = %d\n", *numCompWorkers)
-
-	bt := btree.NewBTree[int]()
-	bt.Insert(10, 23, 11, 5)
-	bt.Insert(10)
-
-	fmt.Println(bt.Size())
-	fmt.Printf("%v\n", bt.Items())
-
 	trees := loadTrees(*input)
-	for _, tree := range trees {
-		fmt.Println(tree.Items())
-		fmt.Printf("hash: %d\n", hash(tree))
+
+	type hashId struct { hash, id int }
+
+	ids := make(chan int, len(trees))
+	hashes := make(chan hashId, len(trees))
+	var hashWg sync.WaitGroup
+
+	hashWg.Add(int(*numHashWorkers))
+
+	hashStart := time.Now()
+	var hashStop time.Time
+	for i := uint(0); i < *numHashWorkers; i++ {
+		go func() {
+			defer hashWg.Done()
+
+			for id := range ids {
+				hash := hash(trees[id])
+				hashes <- hashId{hash, id}
+			}
+		}()
 	}
+
+	go func() {
+		//for hashId := range hashes {
+		for range hashes {
+		}
+	}()
+
+	for i := range trees {
+		ids <- i
+	}
+	close(ids)
+
+	hashWg.Wait()
+	hashStop = time.Now()
+	close(hashes)
+
+	fmt.Printf("hashGroupTime: %v\n", hashStop.Sub(hashStart))
 }
 
 func loadTrees(file string) []*btree.BTree[int] {
