@@ -17,6 +17,7 @@ type context struct {
 	numHashWorkers uint
 	numDataWorkers uint
 	numCompWorkers uint
+	addWithMutex bool
 	trees          []*btree.BTree[int]
 }
 
@@ -24,6 +25,11 @@ func main() {
 	numHashWorkers := flag.Uint("hash-workers", 1, "Number of hash workers")
 	numDataWorkers := flag.Uint("data-workers", 0, "Number of data workers")
 	numCompWorkers := flag.Uint("comp-workers", 0, "Number of comparison workers")
+	addWithMutex := flag.Bool(
+		"add-with-mutex",
+		false,
+		"When specified use a mutex when adding to hash group map, otherwise use channel",
+	)
 	input := flag.String("input", "", "Input file path")
 	flag.Parse()
 
@@ -33,7 +39,13 @@ func main() {
 
 	trees := loadTrees(*input)
 
-	ctx := context{*numHashWorkers, *numDataWorkers, *numCompWorkers, trees}
+	ctx := context{
+		*numHashWorkers,
+		*numDataWorkers,
+		*numCompWorkers,
+		*addWithMutex,
+		trees,
+	}
 
 	if uint(*numDataWorkers) == 0 {
 		hashTreesOnly(&ctx)
