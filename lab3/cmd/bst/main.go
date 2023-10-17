@@ -13,6 +13,13 @@ import (
 	"time"
 )
 
+type context struct {
+	numHashWorkers uint
+	numDataWorkers uint
+	numCompWorkers uint
+	trees          []*btree.BTree[int]
+}
+
 func main() {
 	numHashWorkers := flag.Uint("hash-workers", 1, "Number of hash workers")
 	numDataWorkers := flag.Uint("data-workers", 0, "Number of data workers")
@@ -20,53 +27,19 @@ func main() {
 	input := flag.String("input", "", "Input file path")
 	flag.Parse()
 
-	// Silence unused variable errors for now.
-	_ = numDataWorkers
-	_ = numCompWorkers
-
 	if *input == "" {
 		log.Fatal("Must specify input")
 	}
 
 	trees := loadTrees(*input)
 
-	type hashId struct { hash, id int }
+	ctx := context{*numHashWorkers, *numDataWorkers, *numCompWorkers, trees}
 
-	ids := make(chan int, len(trees))
-	hashes := make(chan hashId, len(trees))
-	var hashWg sync.WaitGroup
-
-	hashWg.Add(int(*numHashWorkers))
-
-	hashStart := time.Now()
-	var hashStop time.Time
-	for i := uint(0); i < *numHashWorkers; i++ {
-		go func() {
-			defer hashWg.Done()
-
-			for id := range ids {
-				hash := hash(trees[id])
-				hashes <- hashId{hash, id}
-			}
-		}()
+	if uint(*numDataWorkers) == 0 {
+		hashTreesOnly(&ctx)
+	} else {
+		hashTreesMapped(&ctx)
 	}
-
-	go func() {
-		//for hashId := range hashes {
-		for range hashes {
-		}
-	}()
-
-	for i := range trees {
-		ids <- i
-	}
-	close(ids)
-
-	hashWg.Wait()
-	hashStop = time.Now()
-	close(hashes)
-
-	fmt.Printf("hashGroupTime: %v\n", hashStop.Sub(hashStart))
 }
 
 func loadTrees(file string) []*btree.BTree[int] {
@@ -97,6 +70,41 @@ func loadTrees(file string) []*btree.BTree[int] {
 	}
 
 	return trees
+}
+
+// Hash each bst and report hash time. Do not add hashes to map.
+func hashTreesOnly(ctx *context) {
+	ids := make(chan int, len(ctx.trees))
+
+	var hashWg sync.WaitGroup
+	hashStart := time.Now()
+	var hashStop time.Time
+
+	hashWg.Add(int(ctx.numHashWorkers))
+
+	for i := uint(0); i < ctx.numHashWorkers; i++ {
+		go func() {
+			defer hashWg.Done()
+
+			for id := range ids {
+				_ = hash(ctx.trees[id])
+			}
+		}()
+	}
+
+	for i := range ctx.trees {
+		ids <- i
+	}
+	close(ids)
+
+	hashWg.Wait()
+	hashStop = time.Now()
+
+	fmt.Printf("hashTime: %f\n", hashStop.Sub(hashStart).Seconds())
+}
+
+func hashTreesMapped(ctx *context) {
+
 }
 
 func hash(bt *btree.BTree[int]) int {
