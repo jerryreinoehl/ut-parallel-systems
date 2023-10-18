@@ -54,7 +54,11 @@ func main() {
 	if uint(*numDataWorkers) == 0 {
 		hashTreesOnly(&ctx)
 	} else {
-		hashTreesMapped(&ctx)
+		if *addWithMutex {
+			hashTreesMappedMutex(&ctx)
+		} else {
+			hashTreesMappedChannel(&ctx)
+		}
 	}
 }
 
@@ -119,7 +123,7 @@ func hashTreesOnly(ctx *context) {
 	fmt.Printf("hashTime: %f\n", hashStop.Sub(hashStart).Seconds())
 }
 
-func hashTreesMapped(ctx *context) {
+func hashTreesMappedChannel(ctx *context) {
 	type hashId struct {hash, id int}
 
 	ids := make(chan int, len(ctx.trees))
@@ -161,6 +165,52 @@ func hashTreesMapped(ctx *context) {
 	hashWg.Wait()
 	close(hashes)
 	<-done
+
+	hashStop = time.Now()
+	fmt.Printf("hashGroupTime: %f\n", hashStop.Sub(hashStart).Seconds())
+
+	for hash, ids := range ctx.hashGroups {
+		fmt.Printf("%d: ", hash)
+		printSlice(ids)
+	}
+}
+
+func hashTreesMappedMutex(ctx *context) {
+	type hashId struct {hash, id int}
+
+	ids := make(chan int, len(ctx.trees))
+
+	lock := sync.Mutex{}
+
+	var hashWg sync.WaitGroup
+	hashStart := time.Now()
+	var hashStop time.Time
+
+	hashWg.Add(int(ctx.numHashWorkers))
+
+	for i := uint(0); i < ctx.numHashWorkers; i++ {
+		go func() {
+			defer hashWg.Done()
+
+			for id := range ids {
+				hash := hash(ctx.trees[id])
+
+				lock.Lock()
+				if ctx.hashGroups[hash] == nil {
+					ctx.hashGroups[hash] = make([]int, 0, 64)
+				}
+				ctx.hashGroups[hash] = append(ctx.hashGroups[hash], id)
+				lock.Unlock()
+			}
+		}()
+	}
+
+	for i := range ctx.trees {
+		ids <- i
+	}
+	close(ids)
+
+	hashWg.Wait()
 
 	hashStop = time.Now()
 	fmt.Printf("hashGroupTime: %f\n", hashStop.Sub(hashStart).Seconds())
