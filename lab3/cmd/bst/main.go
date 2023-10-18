@@ -3,8 +3,10 @@ package main
 import (
 	"bst/pkg/btree"
 	"bufio"
+	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -17,8 +19,9 @@ type context struct {
 	numHashWorkers uint
 	numDataWorkers uint
 	numCompWorkers uint
-	addWithMutex bool
+	addWithMutex   bool
 	trees          []*btree.BTree[int]
+	hashGroups     map[int][]int
 }
 
 func main() {
@@ -45,6 +48,7 @@ func main() {
 		*numCompWorkers,
 		*addWithMutex,
 		trees,
+		make(map[int][]int),
 	}
 
 	if uint(*numDataWorkers) == 0 {
@@ -116,7 +120,55 @@ func hashTreesOnly(ctx *context) {
 }
 
 func hashTreesMapped(ctx *context) {
+	type hashId struct {hash, id int}
 
+	ids := make(chan int, len(ctx.trees))
+	hashes := make(chan hashId, len(ctx.trees))
+	done := make(chan struct{})
+
+	var hashWg sync.WaitGroup
+	hashStart := time.Now()
+	var hashStop time.Time
+
+	hashWg.Add(int(ctx.numHashWorkers))
+
+	for i := uint(0); i < ctx.numHashWorkers; i++ {
+		go func() {
+			defer hashWg.Done()
+
+			for id := range ids {
+				hash := hash(ctx.trees[id])
+				hashes <- hashId{hash, id}
+			}
+		}()
+	}
+
+	go func() {
+		for hashId := range hashes {
+			if ctx.hashGroups[hashId.hash] == nil {
+				ctx.hashGroups[hashId.hash] = make([]int, 0, 64)
+			}
+			ctx.hashGroups[hashId.hash] = append(ctx.hashGroups[hashId.hash], hashId.id)
+		}
+		done <- struct{}{}
+	}()
+
+	for i := range ctx.trees {
+		ids <- i
+	}
+	close(ids)
+
+	hashWg.Wait()
+	close(hashes)
+	<-done
+
+	hashStop = time.Now()
+	fmt.Printf("hashGroupTime: %f\n", hashStop.Sub(hashStart).Seconds())
+
+	for hash, ids := range ctx.hashGroups {
+		fmt.Printf("%d: ", hash)
+		printSlice(ids)
+	}
 }
 
 func hash(bt *btree.BTree[int]) int {
@@ -126,4 +178,14 @@ func hash(bt *btree.BTree[int]) int {
 		hash = (hash * newValue + newValue) % 1000
 	})
 	return hash
+}
+
+func printSlice(slice []int) {
+	var buf bytes.Buffer
+
+	for _, v := range slice {
+		io.WriteString(&buf, fmt.Sprintf("%d ", v))
+	}
+
+	fmt.Println(buf.String())
 }
