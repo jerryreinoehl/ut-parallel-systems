@@ -61,3 +61,11 @@ func (ht *HashTable[K, V]) Get(k K) []V {
 
 	return v
 }
+
+func (ht *HashTable[K, V]) Keys() []K {
+	keys := make([]K, 0, 32)
+	for k := range ht.data {
+		keys = append(keys, k)
+	}
+	return keys
+}
