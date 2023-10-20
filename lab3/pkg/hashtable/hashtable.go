@@ -1,6 +1,8 @@
 package hashtable
 
 import (
+	"bst/pkg/cst"
+	"cmp"
 	"sync"
 )
 
@@ -11,15 +13,15 @@ type row[V any] struct {
 	data []V
 }
 
-type HashTable[K hashable, V any] struct {
+type HashTable[K hashable, V cmp.Ordered] struct {
 	mu sync.RWMutex
-	data map[K]*row[V]
+	data map[K]*cst.Cst[V]
 }
 
-func NewHashTable[K hashable, V any] () *HashTable[K, V] {
+func NewHashTable[K hashable, V cmp.Ordered] () *HashTable[K, V] {
 	return &HashTable[K, V]{
 		mu: sync.RWMutex{},
-		data: make(map[K]*row[V]),
+		data: make(map[K]*cst.Cst[V]),
 	}
 }
 
@@ -31,44 +33,39 @@ func newRow[V any]() *row[V] {
 }
 
 func (ht *HashTable[K, V]) Put(k K, v V) {
-	var row *row[V]
+	var row *cst.Cst[V]
 
 	ht.mu.RLock()
+	row = ht.data[k]
+	ht.mu.RUnlock()
+
 	// Check if we need to create a new row.
-	if ht.data[k] == nil {
-		ht.mu.RUnlock()
+	if row == nil {
 		ht.mu.Lock()
 		// We must recheck in case this row was created before we acquired the
 		// write lock.
-		if ht.data[k] == nil {
-			ht.data[k] = newRow[V]()
+		row = ht.data[k]
+		if row == nil {
+			row = cst.NewCstRef[V]()
+			ht.data[k] = row
 		}
-		row = ht.data[k]
 		ht.mu.Unlock()
-	} else {
-		row = ht.data[k]
-		ht.mu.RUnlock()
 	}
 
-	// Acquire lock for row.
-	row.mu.Lock()
-	row.data = append(row.data, v)
-	row.mu.Unlock()
+	row.Insert(v)
 }
 
 func (ht *HashTable[K, V]) Get(k K) []V {
 	ht.mu.RLock()
-	if ht.data[k] == nil {
-		return nil
-	}
+	row := ht.data[k]
 	ht.mu.RUnlock()
 
-	row := ht.data[k]
-	row.mu.Lock()
-	v := row.data
-	row.mu.Unlock()
+	if row == nil {
+		return nil
+	}
 
-	return v
+	values := row.Items()
+	return values
 }
 
 func (ht *HashTable[K, V]) Keys() []K {
