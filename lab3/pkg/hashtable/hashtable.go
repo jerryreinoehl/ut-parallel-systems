@@ -25,13 +25,6 @@ func NewHashTable[K hashable, V cmp.Ordered] () *HashTable[K, V] {
 	}
 }
 
-func newRow[V any]() *row[V] {
-	return &row[V]{
-		mu: sync.Mutex{},
-		data: make([]V, 0, 32),
-	}
-}
-
 func (ht *HashTable[K, V]) Put(k K, v V) {
 	var row *cst.Cst[V]
 
