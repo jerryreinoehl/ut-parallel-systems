@@ -2,6 +2,7 @@ package main
 
 import (
 	"bst/pkg/btree"
+	"bst/pkg/hashtable"
 	"bufio"
 	"bytes"
 	"flag"
@@ -55,9 +56,17 @@ func main() {
 		hashTreesOnly(&ctx)
 	} else {
 		if *addWithMutex {
-			hashTreesMappedMutex(&ctx)
+			if *numDataWorkers > 1 {
+				hashTreesMappedSemaphore(&ctx)
+			} else {
+				hashTreesMappedMutex(&ctx)
+			}
 		} else {
-			hashTreesMappedChannel(&ctx)
+			if *numDataWorkers > 1 {
+				hashTreesMappedChannels(&ctx)
+			} else {
+				hashTreesMappedChannel(&ctx)
+			}
 		}
 	}
 }
@@ -97,10 +106,10 @@ func hashTreesOnly(ctx *context) {
 	ids := make(chan int, len(ctx.trees))
 
 	var hashWg sync.WaitGroup
+	hashWg.Add(int(ctx.numHashWorkers))
+
 	hashStart := time.Now()
 	var hashStop time.Time
-
-	hashWg.Add(int(ctx.numHashWorkers))
 
 	for i := uint(0); i < ctx.numHashWorkers; i++ {
 		go func() {
@@ -131,10 +140,10 @@ func hashTreesMappedChannel(ctx *context) {
 	done := make(chan struct{})
 
 	var hashWg sync.WaitGroup
+	hashWg.Add(int(ctx.numHashWorkers))
+
 	hashStart := time.Now()
 	var hashStop time.Time
-
-	hashWg.Add(int(ctx.numHashWorkers))
 
 	for i := uint(0); i < ctx.numHashWorkers; i++ {
 		go func() {
@@ -175,6 +184,59 @@ func hashTreesMappedChannel(ctx *context) {
 	}
 }
 
+func hashTreesMappedChannels(ctx *context) {
+	type hashId struct {hash, id int}
+
+	ids := make(chan int, len(ctx.trees))
+	hashes := make(chan hashId, len(ctx.trees))
+	done := make(chan struct{})
+
+	hashGroups := hashtable.NewHashTable[int, int]()
+
+	var hashWg sync.WaitGroup
+	hashWg.Add(int(ctx.numHashWorkers))
+
+	hashStart := time.Now()
+	var hashStop time.Time
+
+	for i := uint(0); i < ctx.numHashWorkers; i++ {
+		go func() {
+			defer hashWg.Done()
+
+			for id := range ids {
+				hash := hash(ctx.trees[id])
+				hashes <- hashId{hash, id}
+			}
+		}()
+	}
+
+	for i := uint(0); i < ctx.numDataWorkers; i++ {
+		go func() {
+			for hashId := range hashes {
+				hashGroups.Put(hashId.hash, hashId.id)
+			}
+			done <- struct{}{}
+		}()
+	}
+
+	for i := range ctx.trees {
+		ids <- i
+	}
+	close(ids)
+
+	hashWg.Wait()
+	close(hashes)
+	<-done
+
+	hashStop = time.Now()
+	fmt.Printf("hashGroupTime: %f\n", hashStop.Sub(hashStart).Seconds())
+
+	for _, hash := range hashGroups.Keys() {
+		fmt.Printf("%d: ", hash)
+		printSlice(hashGroups.Get(hash))
+	}
+}
+
 func hashTreesMappedMutex(ctx *context) {
 	type hashId struct {hash, id int}
 
@@ -183,10 +245,10 @@ func hashTreesMappedMutex(ctx *context) {
 	lock := sync.Mutex{}
 
 	var hashWg sync.WaitGroup
+	hashWg.Add(int(ctx.numHashWorkers))
+
 	hashStart := time.Now()
 	var hashStop time.Time
-
-	hashWg.Add(int(ctx.numHashWorkers))
 
 	for i := uint(0); i < ctx.numHashWorkers; i++ {
 		go func() {
@@ -218,6 +280,49 @@ func hashTreesMappedMutex(ctx *context) {
 	for hash, ids := range ctx.hashGroups {
 		fmt.Printf("%d: ", hash)
 		printSlice(ids)
+	}
+}
+
+func hashTreesMappedSemaphore(ctx *context) {
+	type hashId struct {hash, id int}
+
+	ids := make(chan int, len(ctx.trees))
+	sema := make(chan struct{}, ctx.numDataWorkers)
+	hashGroups := hashtable.NewHashTable[int, int]()
+
+	var hashWg sync.WaitGroup
+	hashStart := time.Now()
+	var hashStop time.Time
+
+	hashWg.Add(int(ctx.numHashWorkers))
+
+	for i := uint(0); i < ctx.numHashWorkers; i++ {
+		go func() {
+			defer hashWg.Done()
+
+			for id := range ids {
+				hash := hash(ctx.trees[id])
+
+				sema <- struct{}{}
+				hashGroups.Put(hash, id)
+				<-sema
+			}
+		}()
+	}
+
+	for i := range ctx.trees {
+		ids <- i
+	}
+	close(ids)
+
+	hashWg.Wait()
+
+	hashStop = time.Now()
+	fmt.Printf("hashGroupTime: %f\n", hashStop.Sub(hashStart).Seconds())
+
+	for _, hash := range hashGroups.Keys() {
+		fmt.Printf("%d: ", hash)
+		printSlice(hashGroups.Get(hash))
 	}
 }
 
