@@ -44,8 +44,6 @@ func (cst *Cst[T]) insert(item T) {
 	var left, right *node[T]
 	var insertLeft bool
 
-	//b.size++
-
 	// Check if head has been initialized yet.
 	cst.mu.RLock()
 	head := cst.head
