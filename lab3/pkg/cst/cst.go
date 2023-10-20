@@ -22,6 +22,11 @@ func NewCst[T cmp.Ordered]() Cst[T] {
 	return Cst[T]{head: nil, mu: sync.RWMutex{}}
 }
 
+func NewCstRef[T cmp.Ordered]() *Cst[T] {
+	cst := NewCst[T]()
+	return &cst
+}
+
 func newNode[T cmp.Ordered](value T) *node[T] {
 	return &node[T]{
 		left: nil,
