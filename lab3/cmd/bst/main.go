@@ -73,6 +73,8 @@ func main() {
 
 	if *numCompWorkers == 1 {
 		compareTreesSequential(&ctx)
+	} else if *numCompWorkers > 1 {
+		compareTreesConcurrent(&ctx)
 	}
 }
 
@@ -394,6 +396,73 @@ func compareTreesSequential(ctx *context) {
 		groupNum++
 	}
 }
+
+func compareTreesConcurrent(ctx *context) {
+	allGroups := make([][]int, 0, 128)
+
+	type cmpItem struct {
+		lhs, rhs *btree.BTree[int]
+		i, j int
+		result chan<- adjmat.Result
+	}
+
+	cmpQueue := make(chan cmpItem, 1024)
+
+	compStart := time.Now()
+	var compStop time.Time
+
+	for i := uint(0); i < ctx.numCompWorkers; i++ {
+		go func() {
+			for cmp := range cmpQueue {
+				match := compareTrees(cmp.lhs, cmp.rhs)
+				cmp.result <- adjmat.NewResult(cmp.i, cmp.j, match)
+			}
+		}()
+	}
+
+	for hash := range ctx.hashGroups {
+		hashGroup := ctx.hashGroups[hash]
+		n := len(hashGroup)
+
+		if n <= 1 {
+			continue
+		}
+
+		// Create adjacency matrix of size `n`.
+		mat := adjmat.NewAdjMat(n)
+		groups := mat.CmpFunc(func(i, j int, results chan<- adjmat.Result) {
+			cmpQueue <- cmpItem{
+				lhs: ctx.trees[hashGroup[i]],
+				rhs: ctx.trees[hashGroup[j]],
+				i: i, j: j, result: results,
+			}
+		})
+
+		for _, group := range groups {
+			for i, idx := range group {
+				group[i] = hashGroup[idx]
+			}
+			allGroups = append(allGroups, group)
+		}
+	}
+
+	close(cmpQueue)
+
+	compStop = time.Now()
+	fmt.Printf("compareTreeTime: %f\n", compStop.Sub(compStart).Seconds())
+
+	groupNum := 0
+	for _, group := range allGroups {
+		if len(group) <= 1 {
+			continue
+		}
+
+		fmt.Printf("group %d: ", groupNum)
+		printSlice(group)
+		groupNum++
+	}
+}
+
 
 func hash(bt *btree.BTree[int]) int {
 	hash := 1
