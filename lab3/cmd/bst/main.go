@@ -242,6 +242,7 @@ func hashTreesMappedChannels(ctx *context) {
 
 	for _, hash := range hashGroups.Keys() {
 		ids := hashGroups.Get(hash)
+		ctx.hashGroups[hash] = ids
 		if len(ids) <= 1 {
 			continue
 		}
@@ -340,6 +341,7 @@ func hashTreesMappedSemaphore(ctx *context) {
 
 	for _, hash := range hashGroups.Keys() {
 		ids := hashGroups.Get(hash)
+		ctx.hashGroups[hash] = ids
 		if len(ids) <= 1 {
 			continue
 		}
