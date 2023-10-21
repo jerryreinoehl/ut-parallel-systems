@@ -3,7 +3,6 @@ package adjmat
 
 import (
 	"sync"
-	"fmt"
 )
 
 type AdjMat struct {
@@ -46,7 +45,7 @@ func (mat *AdjMat) Get(i, j int) bool {
 	return mat.data[i][j].mark
 }
 
-func (mat *AdjMat) CmpFunc(cmp func(int, int, chan<- Result)) {
+func (mat *AdjMat) CmpFunc(cmp func(int, int, chan<- Result)) [][]int {
 	n := mat.size
 
 	var curGroup []int
@@ -72,8 +71,8 @@ func (mat *AdjMat) CmpFunc(cmp func(int, int, chan<- Result)) {
 		}
 
 		curGroup = make([]int, 0, 16)
+		curGroup = append(curGroup, i)
 		mismatch = mismatch[:0]
-		fmt.Println("here")
 
 		for j := i + 1; j < n; j++ {
 			if mat.data[i][j].valid {
@@ -109,9 +108,9 @@ func (mat *AdjMat) CmpFunc(cmp func(int, int, chan<- Result)) {
 			}
 		}
 
-		curGroup = append(curGroup, i)
 		groups = append(groups, curGroup)
 	}
 
 	close(results)
+	return groups
 }

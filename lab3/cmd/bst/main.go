@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bst/pkg/adjmat"
 	"bst/pkg/btree"
 	"bst/pkg/hashtable"
 	"bufio"
@@ -68,6 +69,10 @@ func main() {
 				hashTreesMappedChannel(&ctx)
 			}
 		}
+	}
+
+	if *numCompWorkers == 1 {
+		compareTreesSequential(&ctx)
 	}
 }
 
@@ -341,6 +346,50 @@ func hashTreesMappedSemaphore(ctx *context) {
 
 		fmt.Printf("%d: ", hash)
 		printSlice(ids)
+	}
+}
+
+func compareTreesSequential(ctx *context) {
+	allGroups := make([][]int, 0, 128)
+
+	compStart := time.Now()
+	var compStop time.Time
+
+	for hash := range ctx.hashGroups {
+		hashGroup := ctx.hashGroups[hash]
+		n := len(hashGroup)
+
+		if n <= 1 {
+			continue
+		}
+
+		// Create adjacency matrix of size `n`.
+		mat := adjmat.NewAdjMat(n)
+		groups := mat.CmpFunc(func(i, j int, results chan<- adjmat.Result) {
+			match := compareTrees(ctx.trees[hashGroup[i]], ctx.trees[hashGroup[j]])
+			results <- adjmat.NewResult(i, j, match)
+		})
+
+		for _, group := range groups {
+			for i, idx := range group {
+				group[i] = hashGroup[idx]
+			}
+			allGroups = append(allGroups, group)
+		}
+	}
+
+	compStop = time.Now()
+	fmt.Printf("compareTreeTime: %f\n", compStop.Sub(compStart).Seconds())
+
+	groupNum := 0
+	for _, group := range allGroups {
+		if len(group) <= 1 {
+			continue
+		}
+
+		fmt.Printf("group %d: ", groupNum)
+		printSlice(group)
+		groupNum++
 	}
 }
 
