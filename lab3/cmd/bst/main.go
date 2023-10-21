@@ -179,6 +179,10 @@ func hashTreesMappedChannel(ctx *context) {
 	fmt.Printf("hashGroupTime: %f\n", hashStop.Sub(hashStart).Seconds())
 
 	for hash, ids := range ctx.hashGroups {
+		if len(ids) <= 1 {
+			continue
+		}
+
 		fmt.Printf("%d: ", hash)
 		printSlice(ids)
 	}
@@ -232,8 +236,13 @@ func hashTreesMappedChannels(ctx *context) {
 	fmt.Printf("hashGroupTime: %f\n", hashStop.Sub(hashStart).Seconds())
 
 	for _, hash := range hashGroups.Keys() {
+		ids := hashGroups.Get(hash)
+		if len(ids) <= 1 {
+			continue
+		}
+
 		fmt.Printf("%d: ", hash)
-		printSlice(hashGroups.Get(hash))
+		printSlice(ids)
 	}
 }
 
@@ -278,6 +287,10 @@ func hashTreesMappedMutex(ctx *context) {
 	fmt.Printf("hashGroupTime: %f\n", hashStop.Sub(hashStart).Seconds())
 
 	for hash, ids := range ctx.hashGroups {
+		if len(ids) <= 1 {
+			continue
+		}
+
 		fmt.Printf("%d: ", hash)
 		printSlice(ids)
 	}
@@ -321,8 +334,13 @@ func hashTreesMappedSemaphore(ctx *context) {
 	fmt.Printf("hashGroupTime: %f\n", hashStop.Sub(hashStart).Seconds())
 
 	for _, hash := range hashGroups.Keys() {
+		ids := hashGroups.Get(hash)
+		if len(ids) <= 1 {
+			continue
+		}
+
 		fmt.Printf("%d: ", hash)
-		printSlice(hashGroups.Get(hash))
+		printSlice(ids)
 	}
 }
 
