@@ -4,6 +4,7 @@ import (
 	"bst/pkg/adjmat"
 	"bst/pkg/btree"
 	"bst/pkg/hashtable"
+	"bst/pkg/queue"
 	"bufio"
 	"bytes"
 	"flag"
@@ -34,6 +35,11 @@ func main() {
 		"add-with-mutex",
 		false,
 		"When specified use a mutex when adding to hash group map, otherwise use channel",
+	)
+	compareWithBuffer := flag.Bool(
+		"compare-with-buffer",
+		false,
+		"When specified use concurrent buffer when comparing trees, otherwise use channel",
 	)
 	input := flag.String("input", "", "Input file path")
 	flag.Parse()
@@ -74,7 +80,11 @@ func main() {
 	if *numCompWorkers == 1 {
 		compareTreesSequential(&ctx)
 	} else if *numCompWorkers > 1 {
-		compareTreesConcurrent(&ctx)
+		if *compareWithBuffer {
+			compareTreesConcurrentBuffer(&ctx)
+		} else {
+			compareTreesConcurrent(&ctx)
+		}
 	}
 }
 
@@ -463,6 +473,91 @@ func compareTreesConcurrent(ctx *context) {
 	}
 }
 
+func compareTreesConcurrentBuffer(ctx *context) {
+	allGroups := make([][]int, 0, 128)
+
+	type cmpItem struct {
+		lhs, rhs *btree.BTree[int]
+		i, j int
+		result chan<- adjmat.Result
+	}
+
+	cmpQueue := queue.NewQueue[cmpItem](int(ctx.numCompWorkers))
+
+	//cmpQueue := make(chan cmpItem, 1024)
+
+	compStart := time.Now()
+	var compStop time.Time
+	compWg := sync.WaitGroup{}
+	compWg.Add(int(ctx.numCompWorkers))
+
+	for i := uint(0); i < ctx.numCompWorkers; i++ {
+		go func() {
+			defer compWg.Done()
+
+			for {
+
+				cmp, ok := cmpQueue.Dequeue()
+
+				if !ok {
+					break
+				}
+
+				match := compareTrees(cmp.lhs, cmp.rhs)
+				cmp.result <- adjmat.NewResult(cmp.i, cmp.j, match)
+			}
+		}()
+	}
+
+	for hash := range ctx.hashGroups {
+		hashGroup := ctx.hashGroups[hash]
+		n := len(hashGroup)
+
+		if n <= 1 {
+			continue
+		}
+
+		// Create adjacency matrix of size `n`.
+		mat := adjmat.NewAdjMat(n)
+		groups := mat.CmpFunc(func(i, j int, results chan<- adjmat.Result) {
+			//cmpQueue <- cmpItem{
+			//	lhs: ctx.trees[hashGroup[i]],
+			//	rhs: ctx.trees[hashGroup[j]],
+			//	i: i, j: j, result: results,
+			//}
+			item := cmpItem{
+				lhs: ctx.trees[hashGroup[i]],
+				rhs: ctx.trees[hashGroup[j]],
+				i: i, j: j, result: results,
+			}
+			cmpQueue.Enqueue(item)
+		})
+
+		for _, group := range groups {
+			for i, idx := range group {
+				group[i] = hashGroup[idx]
+			}
+			allGroups = append(allGroups, group)
+		}
+	}
+
+	cmpQueue.Cancel()
+	compWg.Wait()
+
+	compStop = time.Now()
+	fmt.Printf("compareTreeTime: %f\n", compStop.Sub(compStart).Seconds())
+
+	groupNum := 0
+	for _, group := range allGroups {
+		if len(group) <= 1 {
+			continue
+		}
+
+		fmt.Printf("group %d: ", groupNum)
+		printSlice(group)
+		groupNum++
+	}
+}
 
 func hash(bt *btree.BTree[int]) int {
 	hash := 1
