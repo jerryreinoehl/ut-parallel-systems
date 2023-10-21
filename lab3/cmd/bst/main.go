@@ -353,6 +353,23 @@ func hash(bt *btree.BTree[int]) int {
 	return hash
 }
 
+func compareTrees(a, b *btree.BTree[int]) bool {
+	if a.Size() != b.Size() {
+		return false
+	}
+
+	aItems := a.Items()
+	bItems := b.Items()
+
+	for i := 0; i < len(aItems); i++ {
+		if aItems[i] != bItems[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
 func printSlice(slice []int) {
 	var buf bytes.Buffer
 
