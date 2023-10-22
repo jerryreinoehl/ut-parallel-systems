@@ -38,11 +38,19 @@ func main() {
 	)
 	compareWithBuffer := flag.Bool(
 		"compare-with-buffer",
-		false,
+		true,
 		"When specified use concurrent buffer when comparing trees, otherwise use channel",
 	)
 	input := flag.String("input", "", "Input file path")
 	flag.Parse()
+
+	if *numHashWorkers == *numDataWorkers && *numHashWorkers > 1 {
+		*addWithMutex = true
+	}
+
+	if *numCompWorkers > 1 {
+		*numHashWorkers = uint(16)
+	}
 
 	if *input == "" {
 		log.Fatal("Must specify input")
@@ -63,7 +71,9 @@ func main() {
 		hashTreesOnly(&ctx)
 	} else {
 		if *addWithMutex {
-			if *numDataWorkers > 1 {
+			if *numDataWorkers == *numHashWorkers && *numDataWorkers > 1 {
+				hashTreesMappedMutex(&ctx)
+			} else if *numDataWorkers > 1 {
 				hashTreesMappedSemaphore(&ctx)
 			} else {
 				hashTreesMappedMutex(&ctx)
