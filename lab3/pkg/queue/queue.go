@@ -11,7 +11,6 @@ type Queue[T any] struct {
 	produceCond *sync.Cond // Signals that items may be added to queue.
 	capacity    int
 	cancel      bool
-	waiting     int
 }
 
 func NewQueue[T any](capacity int) Queue[T] {
@@ -23,19 +22,20 @@ func NewQueue[T any](capacity int) Queue[T] {
 		produceCond: sync.NewCond(&mu),
 		capacity: capacity,
 		cancel: false,
-		waiting: 0,
 	}
 }
 
 func (q *Queue[T]) Enqueue(t T) {
 	q.produceCond.L.Lock()
-	for q.Size() == q.capacity {
+	for q.Size() == q.capacity && !q.cancel {
 		q.produceCond.Wait()
-		if q.cancel {
-			q.produceCond.L.Unlock()
-			return
-		}
 	}
+
+	if q.cancel {
+		q.produceCond.L.Unlock()
+		return
+	}
+
 	q.data = append(q.data, t)
 	q.consumeCond.Signal()
 	q.produceCond.L.Unlock()
@@ -73,13 +73,7 @@ func (q *Queue[T]) Size() int {
 func (q *Queue[T]) Cancel() {
 	q.consumeCond.L.Lock()
 	q.cancel = true
+	q.consumeCond.Broadcast()
+	q.produceCond.Broadcast()
 	q.consumeCond.L.Unlock()
-
-	for q.waiting > 0 {
-		q.consumeCond.L.Lock()
-		q.consumeCond.Broadcast()
-		q.produceCond.Broadcast()
-		q.produceCond.Wait()
-		q.consumeCond.L.Unlock()
-	}
 }
