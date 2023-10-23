@@ -74,6 +74,7 @@ func main() {
 			if *numDataWorkers == *numHashWorkers && *numDataWorkers > 1 {
 				hashTreesMappedMutex(&ctx)
 			} else if *numDataWorkers > 1 {
+			//if *numDataWorkers > 1 {
 				hashTreesMappedSemaphore(&ctx)
 			} else {
 				hashTreesMappedMutex(&ctx)
@@ -90,6 +91,7 @@ func main() {
 	if *numCompWorkers == 1 {
 		compareTreesSequential(&ctx)
 	} else if *numCompWorkers > 1 {
+		//compareTreesConcurrentPerCompare(&ctx)
 		if *compareWithBuffer {
 			compareTreesConcurrentBuffer(&ctx)
 		} else {
@@ -483,6 +485,58 @@ func compareTreesConcurrent(ctx *context) {
 	}
 }
 
+func compareTreesConcurrentPerCompare(ctx *context) {
+	allGroups := make([][]int, 0, 128)
+
+	type cmpItem struct {
+		lhs, rhs *btree.BTree[int]
+		i, j int
+		result chan<- adjmat.Result
+	}
+
+	compStart := time.Now()
+	var compStop time.Time
+
+	for hash := range ctx.hashGroups {
+		hashGroup := ctx.hashGroups[hash]
+		n := len(hashGroup)
+
+		if n <= 1 {
+			continue
+		}
+
+		// Create adjacency matrix of size `n`.
+		mat := adjmat.NewAdjMat(n)
+		groups := mat.CmpFunc(func(i, j int, results chan<- adjmat.Result) {
+			go func(a, b *btree.BTree[int], i, j int, result chan<- adjmat.Result) {
+				match := compareTrees(a, b)
+				result <- adjmat.NewResult(i, j, match)
+			}(ctx.trees[hashGroup[i]], ctx.trees[hashGroup[j]], i, j, results)
+		})
+
+		for _, group := range groups {
+			for i, idx := range group {
+				group[i] = hashGroup[idx]
+			}
+			allGroups = append(allGroups, group)
+		}
+	}
+
+	compStop = time.Now()
+	fmt.Printf("compareTreeTime: %f\n", compStop.Sub(compStart).Seconds())
+
+	groupNum := 0
+	for _, group := range allGroups {
+		if len(group) <= 1 {
+			continue
+		}
+
+		fmt.Printf("group %d: ", groupNum)
+		printSlice(group)
+		groupNum++
+	}
+}
+
 func compareTreesConcurrentBuffer(ctx *context) {
 	allGroups := make([][]int, 0, 128)
 
@@ -493,8 +547,6 @@ func compareTreesConcurrentBuffer(ctx *context) {
 	}
 
 	cmpQueue := queue.NewQueue[cmpItem](int(ctx.numCompWorkers))
-
-	//cmpQueue := make(chan cmpItem, 1024)
 
 	compStart := time.Now()
 	var compStop time.Time
@@ -530,11 +582,6 @@ func compareTreesConcurrentBuffer(ctx *context) {
 		// Create adjacency matrix of size `n`.
 		mat := adjmat.NewAdjMat(n)
 		groups := mat.CmpFunc(func(i, j int, results chan<- adjmat.Result) {
-			//cmpQueue <- cmpItem{
-			//	lhs: ctx.trees[hashGroup[i]],
-			//	rhs: ctx.trees[hashGroup[j]],
-			//	i: i, j: j, result: results,
-			//}
 			item := cmpItem{
 				lhs: ctx.trees[hashGroup[i]],
 				rhs: ctx.trees[hashGroup[j]],
