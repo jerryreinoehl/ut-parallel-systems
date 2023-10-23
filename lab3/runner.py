@@ -89,7 +89,7 @@ def main():
     #hash_time(hash_workers=75000, input="fine")
     #hash_time(hash_workers=64, input="coarse")
     #hash_group_time(hash_workers=1, data_workers=32, mutex=False, input="fine")
-    compare_tree_time(comp_workers=4, buffer=False)
+    compare_tree_time(comp_workers=2, buffer=False, input="fine")
 
 
 if __name__ == "__main__":
