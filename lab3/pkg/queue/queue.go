@@ -46,19 +46,21 @@ func (q *Queue[T]) Dequeue() (T, bool) {
 
 	q.consumeCond.L.Lock()
 
-	for q.Size() == 0 {
-		q.waiting++
+	for q.Size() == 0 && !q.cancel {
 		q.consumeCond.Wait()
-		q.waiting--
-		if q.cancel {
-			q.produceCond.Signal()
-			q.consumeCond.L.Unlock()
-			return t, false
-		}
+	}
+
+	if q.cancel {
+		q.consumeCond.L.Unlock()
+		return t, false
 	}
 
 	t = q.data[0]
 	q.data = q.data[1:]
+
+	//l := len(q.data)
+	//t = q.data[l - 1]
+	//q.data = q.data[:l - 1]
 
 	q.produceCond.Signal()
 	q.consumeCond.L.Unlock()
