@@ -48,6 +48,10 @@ pub struct Participant {
     running: Arc<AtomicBool>,
     send_success_prob: f64,
     operation_success_prob: f64,
+    tx: Sender<ProtocolMessage>,
+    rx: Receiver<ProtocolMessage>,
+    successful_ops: u64,
+    failed_ops: u64,
 }
 
 ///
@@ -77,7 +81,10 @@ impl Participant {
         log_path: String,
         r: Arc<AtomicBool>,
         send_success_prob: f64,
-        operation_success_prob: f64) -> Participant {
+        operation_success_prob: f64,
+        tx: Sender<ProtocolMessage>,
+        rx: Receiver<ProtocolMessage>,
+    ) -> Participant {
 
         Participant {
             id_str: id_str,
@@ -87,6 +94,10 @@ impl Participant {
             send_success_prob: send_success_prob,
             operation_success_prob: operation_success_prob,
             // TODO
+            tx,
+            rx,
+            successful_ops: 0,
+            failed_ops: 0,
         }
     }
 
@@ -101,7 +112,7 @@ impl Participant {
     pub fn send(&mut self, pm: ProtocolMessage) {
         let x: f64 = random();
         if x <= self.send_success_prob {
-            // TODO: Send success
+            self.tx.send(pm).unwrap();
         } else {
             // TODO: Send fail
         }
@@ -119,17 +130,37 @@ impl Participant {
     ///       (it's ok to add parameters or return something other than
     ///       bool if it's more convenient for your design).
     ///
-    pub fn perform_operation(&mut self, request_option: &Option<ProtocolMessage>) -> bool {
-
+    //pub fn perform_operation(&mut self, request_option: &Option<ProtocolMessage>) -> bool {
+    pub fn perform_operation(&mut self, request: &ProtocolMessage) -> bool {
         trace!("{}::Performing operation", self.id_str.clone());
-        let x: f64 = random();
-        if x <= self.operation_success_prob {
-            // TODO: Successful operation
-        } else {
-            // TODO: Failed operation
-        }
 
-        true
+        let x: f64 = random();
+        let mtype = if x <= self.operation_success_prob {
+            MessageType::ParticipantVoteCommit
+        } else {
+            MessageType::ParticipantVoteAbort
+        };
+
+        let pm = ProtocolMessage::generate(
+            mtype, request.txid.clone(), self.id_str.clone(), request.opid
+        );
+        self.log.append(mtype, request.txid.clone(), self.id_str.clone(), request.opid);
+        self.send(pm);
+
+        // Wait for final operation from coordinator.
+        let result = self.rx.recv().unwrap().mtype;
+        self.log.append(result, request.txid.clone(), self.id_str.clone(), request.opid);
+
+        match result {
+            MessageType::CoordinatorCommit => {
+                self.successful_ops += 1;
+                true
+            }
+            _ => {
+                self.failed_ops += 1;
+                false
+            }
+        }
     }
 
     ///
@@ -139,8 +170,8 @@ impl Participant {
     ///
     pub fn report_status(&mut self) {
         // TODO: Collect actual stats
-        let successful_ops: u64 = 0;
-        let failed_ops: u64 = 0;
+        let successful_ops: u64 = self.successful_ops;
+        let failed_ops: u64 = self.failed_ops;
         let unknown_ops: u64 = 0;
 
         println!("{:16}:\tCommitted: {:6}\tAborted: {:6}\tUnknown: {:6}", self.id_str.clone(), successful_ops, failed_ops, unknown_ops);
@@ -167,7 +198,17 @@ impl Participant {
     pub fn protocol(&mut self) {
         trace!("{}::Beginning protocol", self.id_str.clone());
 
-        // TODO
+        while let Ok(msg) = self.rx.recv() {
+            match msg.mtype {
+                MessageType::CoordinatorPropose => {
+                    self.perform_operation(&msg);
+                }
+                MessageType::CoordinatorExit => {
+                    break;
+                }
+                _ => continue
+            }
+        }
 
         self.wait_for_exit_signal();
         self.report_status();

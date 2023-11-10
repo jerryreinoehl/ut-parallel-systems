@@ -17,6 +17,7 @@ use client::ipc_channel::ipc::TryRecvError;
 use client::ipc_channel::ipc::IpcSender as Sender;
 
 use message;
+use message::ProtocolMessage;
 use message::MessageType;
 use message::RequestStatus;
 
@@ -24,8 +25,13 @@ use message::RequestStatus;
 #[derive(Debug)]
 pub struct Client {
     pub id_str: String,
+    pub tx: Sender<ProtocolMessage>,
+    pub rx: Receiver<ProtocolMessage>,
     pub running: Arc<AtomicBool>,
     pub num_requests: u32,
+    pub successful_ops: u64,
+    pub failed_ops: u64,
+    pub unknown_ops: u64,
 }
 
 ///
@@ -49,13 +55,21 @@ impl Client {
     /// HINT: You may want to pass some global flags that indicate whether
     ///       the protocol is still running to this constructor
     ///
-    pub fn new(id_str: String,
-               running: Arc<AtomicBool>) -> Client {
-        Client {
-            id_str: id_str,
-            running: running,
+    pub fn new(
+        id_str: String,
+        tx: Sender<ProtocolMessage>,
+        rx: Receiver<ProtocolMessage>,
+        running: Arc<AtomicBool>
+    ) -> Self {
+        Self {
+            id_str,
+            tx,
+            rx,
+            running,
             num_requests: 0,
-            // TODO
+            successful_ops: 0,
+            failed_ops: 0,
+            unknown_ops: 0,
         }
     }
 
@@ -76,7 +90,6 @@ impl Client {
     /// Send the next operation to the coordinator
     ///
     pub fn send_next_operation(&mut self) {
-
         // Create a new request with a unique TXID.
         self.num_requests = self.num_requests + 1;
         let txid = format!("{}_op_{}", self.id_str.clone(), self.num_requests);
@@ -87,6 +100,7 @@ impl Client {
         info!("{}::Sending operation #{}", self.id_str.clone(), self.num_requests);
 
         // TODO
+        self.tx.send(pm).unwrap();
 
         trace!("{}::Sent operation #{}", self.id_str.clone(), self.num_requests);
     }
@@ -98,10 +112,14 @@ impl Client {
     /// not fail in this simulation
     ///
     pub fn recv_result(&mut self) {
-
         info!("{}::Receiving Coordinator Result", self.id_str.clone());
+        let msg = self.rx.recv().unwrap();
 
-        // TODO
+        match msg.mtype {
+            MessageType::ClientResultCommit => self.successful_ops += 1,
+            MessageType::ClientResultAbort => self.failed_ops += 1,
+            _ => self.unknown_ops += 1,
+        }
     }
 
     ///
@@ -110,12 +128,27 @@ impl Client {
     /// requests made by this client before exiting.
     ///
     pub fn report_status(&mut self) {
-        // TODO: Collect actual stats
-        let successful_ops: u64 = 0;
-        let failed_ops: u64 = 0;
-        let unknown_ops: u64 = 0;
+        let successful_ops: u64 = self.successful_ops;
+        let failed_ops: u64 = self.failed_ops;
+        let unknown_ops: u64 = self.unknown_ops;
 
-        println!("{:16}:\tCommitted: {:6}\tAborted: {:6}\tUnknown: {:6}", self.id_str.clone(), successful_ops, failed_ops, unknown_ops);
+        println!(
+            "{:16}:\tCommitted: {:6}\tAborted: {:6}\tUnknown: {:6}",
+            self.id_str.clone(),
+            successful_ops,
+            failed_ops,
+            unknown_ops
+        );
+    }
+
+    pub fn send_client_shutdown(&self) {
+        let pm = ProtocolMessage::generate(
+            MessageType::CoordinatorExit,
+            format!("{}_done", self.id_str),
+            self.id_str.clone(),
+            0,
+        );
+        self.tx.send(pm).unwrap();
     }
 
     ///
@@ -126,8 +159,13 @@ impl Client {
     ///       exit signal before returning from the protocol method!
     ///
     pub fn protocol(&mut self, n_requests: u32) {
+        for _ in 0..n_requests {
+            self.send_next_operation();
+            self.recv_result();
+        }
 
-        // TODO
+        self.send_client_shutdown();
+
         self.wait_for_exit_signal();
         self.report_status();
     }
