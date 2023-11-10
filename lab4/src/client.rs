@@ -80,7 +80,11 @@ impl Client {
     pub fn wait_for_exit_signal(&mut self) {
         trace!("{}::Waiting for exit signal", self.id_str.clone());
 
-        // TODO
+        while let Ok(msg) = self.rx.recv() {
+            if msg.mtype == MessageType::CoordinatorExit {
+                break;
+            }
+        }
 
         trace!("{}::Exiting", self.id_str.clone());
     }
@@ -99,7 +103,6 @@ impl Client {
                                                     self.num_requests);
         info!("{}::Sending operation #{}", self.id_str.clone(), self.num_requests);
 
-        // TODO
         self.tx.send(pm).unwrap();
 
         trace!("{}::Sent operation #{}", self.id_str.clone(), self.num_requests);
@@ -114,10 +117,12 @@ impl Client {
     pub fn recv_result(&mut self) {
         info!("{}::Receiving Coordinator Result", self.id_str.clone());
         let msg = self.rx.recv().unwrap();
+        info!("{}::Received {:?}", self.id_str.clone(), msg.mtype);
 
         match msg.mtype {
             MessageType::ClientResultCommit => self.successful_ops += 1,
             MessageType::ClientResultAbort => self.failed_ops += 1,
+            MessageType::CoordinatorExit => self.running.store(false, Ordering::SeqCst),
             _ => self.unknown_ops += 1,
         }
     }
@@ -159,14 +164,23 @@ impl Client {
     ///       exit signal before returning from the protocol method!
     ///
     pub fn protocol(&mut self, n_requests: u32) {
+        let mut running = true;
+
         for _ in 0..n_requests {
+            running = self.running.load(Ordering::SeqCst);
+            if !running {
+                break;
+            }
+
             self.send_next_operation();
             self.recv_result();
         }
 
-        self.send_client_shutdown();
+        if running {
+            self.send_client_shutdown();
+            self.wait_for_exit_signal();
+        }
 
-        self.wait_for_exit_signal();
         self.report_status();
     }
 }

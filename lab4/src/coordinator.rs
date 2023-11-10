@@ -150,8 +150,8 @@ impl Coordinator {
     /// HINT: Wait for some kind of exit signal before returning from the protocol!
     ///
     pub fn protocol(&mut self) {
-        while self.num_clients > 0 {
-            let Ok(request) = self.client_rx.recv() else {
+        while self.num_clients > 0 && self.running.load(Ordering::SeqCst) {
+            let Ok(request) = self.client_rx.try_recv() else {
                 continue;
             };
 
@@ -166,7 +166,7 @@ impl Coordinator {
                 MessageType::CoordinatorExit => {
                     info!("{}::Received shutdown from {}", self.id_str.clone(), request.senderid.clone());
                     self.num_clients -= 1;
-                    self.clients.remove(&request.senderid);
+                    //self.clients.remove(&request.senderid);
                 }
                 _ => println!("HANDLE ME!")
             }
@@ -177,11 +177,15 @@ impl Coordinator {
             self.send_shutdown(participant_tx);
         }
 
+        // Shutdown any remaining clients.
+        for (_, client_tx) in &self.clients {
+            self.send_shutdown(client_tx);
+        }
+
         self.report_status();
     }
 
     pub fn make_request(&mut self, request: &message::ProtocolMessage) -> RequestStatus {
-        //let mut opid = 0;
         let mut received = 0;
         let mut abort = false;
 
@@ -190,13 +194,11 @@ impl Coordinator {
                 MessageType::CoordinatorPropose,
                 request.txid.clone(),
                 self.id_str.clone(),
-                //opid,
                 request.opid,
             );
             info!("{}::Sending propose to {}", self.id_str.clone(), participant);
             self.log.append(MessageType::CoordinatorPropose, request.txid.clone(), self.id_str.clone(), request.opid);
             tx.send(pm).unwrap();
-            //opid += 1;
         }
 
         let now = Instant::now();
@@ -269,6 +271,6 @@ impl Coordinator {
             self.id_str.clone(),
             0
         );
-        tx.send(pm).unwrap();
+        tx.send(pm).ok();
     }
 }
