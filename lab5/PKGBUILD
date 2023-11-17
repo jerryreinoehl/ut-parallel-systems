@@ -63,7 +63,7 @@ package() {
   ln -sf mpiexec.hydra "${pkgdir}/opt/mpich/bin/mpirun.hydra"
 
   install -D -m644 "${srcdir}/${pkgname}-${pkgver}/COPYRIGHT" "${pkgdir}/usr/share/licenses/mpich/license.txt"
-  install -D -m755 "${srcdir}/${pkgname}.profile" "${pkgdir}/etc/profile.d/mpich.sh"
+  install -D -m644 "${srcdir}/${pkgname}.profile" "${pkgdir}/etc/profile.d/mpich.sh"
 
   mkdir -p "${pkgdir}/etc/ld.so.conf.d"
   echo /opt/mpich/lib > "${pkgdir}/etc/ld.so.conf.d/mpich.conf"
