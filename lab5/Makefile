@@ -1,7 +1,7 @@
 CC := g++
 CFLAGS := -std=c++17 -O2 -Wall -Werror -Wextra
 SRC = ./src/*.cpp
-OBJ = main.o args.o particle.o
+OBJ = main.o args.o particle.o spatialpartitiontree.o
 INC = ./src/
 
 TARGET := nbody
@@ -18,7 +18,7 @@ $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -I$(INC) -c -o $@ $^
 
 .PHONY: debug
-debug: CFLAGS = -g -O0
+debug: CFLAGS = -g -O0 -fsanitize=address
 debug: $(TARGET)
 
 .PHONY: clean

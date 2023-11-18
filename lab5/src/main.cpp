@@ -1,5 +1,6 @@
 #include "main.h"
 #include "args.h"
+#include "spatialpartitiontree.h"
 
 #include <fstream>
 #include <sstream>

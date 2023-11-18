@@ -4,6 +4,7 @@
 
 class Particle {
   public:
+    Particle();
     Particle(int id, double x, double y, double mass, double dx, double dy);
 
     int get_id() const;
