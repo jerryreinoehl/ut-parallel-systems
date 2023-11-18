@@ -77,7 +77,7 @@ void SpatialPartitionTree2D::Node::subdivide() {
   se_ = new Node{x_ + half_size, y_ + half_size, half_size};
 }
 
-SpatialPartitionTree2D::Node *SpatialPartitionTree2D::Node::get_subregion(const Particle& particle) {
+SpatialPartitionTree2D::Node *SpatialPartitionTree2D::Node::get_subregion(const Particle& particle) const {
   double px = particle.get_x(), py = particle.get_y();
   double half_size = size_ / 2;
 

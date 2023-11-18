@@ -38,5 +38,5 @@ class SpatialPartitionTree2D::Node {
     Node *se_{nullptr};
 
     void subdivide();
-    Node *get_subregion(const Particle& particle);
+    Node *get_subregion(const Particle& particle) const;
 };
