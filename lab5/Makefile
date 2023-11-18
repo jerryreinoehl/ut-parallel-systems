@@ -1,7 +1,7 @@
 CC := g++
 CFLAGS := -std=c++17 -O2 -Wall -Werror -Wextra
 SRC = ./src/*.cpp
-OBJ = main.o args.o
+OBJ = main.o args.o particle.o
 INC = ./src/
 
 TARGET := nbody
