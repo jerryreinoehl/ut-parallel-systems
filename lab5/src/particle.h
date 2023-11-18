@@ -17,12 +17,12 @@ class Particle {
     std::string to_string() const;
 
   private:
-    int id_;
-    double x_;
-    double y_;
-    double mass_;
-    double dx_;
-    double dy_;
+    int id_{0};
+    double x_{0};
+    double y_{0};
+    double mass_{0};
+    double dx_{0};
+    double dy_{0};
 };
 
 std::ostream& operator<<(std::ostream& out, const Particle& particle);

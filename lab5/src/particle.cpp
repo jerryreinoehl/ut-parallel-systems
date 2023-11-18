@@ -1,5 +1,7 @@
 #include "particle.h"
 
+Particle::Particle() {}
+
 Particle::Particle(int id, double x, double y, double mass, double dx, double dy)
   : id_(id), x_(x), y_(y), mass_(mass), dx_(dx), dy_(dy)
 { }
