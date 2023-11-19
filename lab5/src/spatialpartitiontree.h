@@ -9,6 +9,7 @@ class SpatialPartitionTree2D {
   public:
     friend class Node;
     SpatialPartitionTree2D(double size);
+    SpatialPartitionTree2D(double size, const std::vector<Particle>& particles);
     ~SpatialPartitionTree2D();
 
     void put(const Particle& particle);

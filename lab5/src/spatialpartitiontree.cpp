@@ -7,6 +7,12 @@ SpatialPartitionTree2D::SpatialPartitionTree2D(double size) : size_(size) {
   root_ = new Node{0, 0, size_};
 }
 
+SpatialPartitionTree2D::SpatialPartitionTree2D(double size, const std::vector<Particle>& particles)
+  : SpatialPartitionTree2D(size)
+{
+  put(particles);
+}
+
 SpatialPartitionTree2D::~SpatialPartitionTree2D() {
   std::stack<Node*> nodes;
   Node* node;
