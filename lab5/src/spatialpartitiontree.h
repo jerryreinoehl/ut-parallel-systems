@@ -26,6 +26,7 @@ class SpatialPartitionTree2D::Node {
     Node(double x, double y, double size);
 
     void put(const Particle& particle);
+    void compute_center();
     std::string to_string() const;
 
   private:

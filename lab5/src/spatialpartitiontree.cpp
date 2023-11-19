@@ -73,11 +73,6 @@ void SpatialPartitionTree2D::compute_centers() {
     }
   }
 
-  double nw_x, ne_x, sw_x, se_x;
-  double nw_y, ne_y, sw_y, se_y;
-  double nw_mass, ne_mass, sw_mass, se_mass;
-  double mass;
-
   while (!nodes.empty()) {
     node = nodes.top();
     nodes.pop();
@@ -86,27 +81,7 @@ void SpatialPartitionTree2D::compute_centers() {
       continue;
     }
 
-    nw_mass = node->nw_->com_.get_mass();
-    nw_x = nw_mass * node->nw_->com_.get_x();
-    nw_y = nw_mass * node->nw_->com_.get_y();
-
-    ne_mass = node->ne_->com_.get_mass();
-    ne_x = ne_mass * node->ne_->com_.get_x();
-    ne_y = ne_mass * node->ne_->com_.get_y();
-
-    sw_mass = node->sw_->com_.get_mass();
-    sw_x = sw_mass * node->sw_->com_.get_x();
-    sw_y = sw_mass * node->sw_->com_.get_y();
-
-    se_mass = node->se_->com_.get_mass();
-    se_x = se_mass * node->se_->com_.get_x();
-    se_y = se_mass * node->se_->com_.get_y();
-
-    mass = nw_mass + ne_mass + sw_mass + se_mass;
-
-    node->com_.set_x((nw_x + ne_x + sw_x + se_x) / mass);
-    node->com_.set_y((nw_y + ne_y + sw_y + se_y) / mass);
-    node->com_.set_mass(mass);
+    node->compute_center();
   }
 }
 
@@ -126,6 +101,35 @@ void SpatialPartitionTree2D::Node::put(const Particle& particle) {
 
   qty_++;
   get_subregion(particle)->put(particle);
+}
+
+void SpatialPartitionTree2D::Node::compute_center() {
+  double nw_x, ne_x, sw_x, se_x;
+  double nw_y, ne_y, sw_y, se_y;
+  double nw_mass, ne_mass, sw_mass, se_mass;
+  double mass;
+
+  nw_mass = nw_->com_.get_mass();
+  nw_x = nw_mass * nw_->com_.get_x();
+  nw_y = nw_mass * nw_->com_.get_y();
+
+  ne_mass = ne_->com_.get_mass();
+  ne_x = ne_mass * ne_->com_.get_x();
+  ne_y = ne_mass * ne_->com_.get_y();
+
+  sw_mass = sw_->com_.get_mass();
+  sw_x = sw_mass * sw_->com_.get_x();
+  sw_y = sw_mass * sw_->com_.get_y();
+
+  se_mass = se_->com_.get_mass();
+  se_x = se_mass * se_->com_.get_x();
+  se_y = se_mass * se_->com_.get_y();
+
+  mass = nw_mass + ne_mass + sw_mass + se_mass;
+
+  com_.set_x((nw_x + ne_x + sw_x + se_x) / mass);
+  com_.set_y((nw_y + ne_y + sw_y + se_y) / mass);
+  com_.set_mass(mass);
 }
 
 std::string SpatialPartitionTree2D::Node::to_string() const {
