@@ -19,13 +19,18 @@ class SpatialPartitionTree2D {
 
     Vector2D compute_force(const Particle& particle, double threshold, double gravity) const;
 
+    bool in_bounds(const Particle& particle) const;
+
+    // Resets all allocated nodes to empty without freeing them. When reusing the tree,
+    // this is much faster than creating a new one and reallocating new nodes, however,
+    // this may increase memory use.
+    void reset();
+
   private:
     class Node;
 
     double size_;
     Node *root_;
-
-    bool in_bounds(const Particle& particle) const;
 };
 
 class SpatialPartitionTree2D::Node {

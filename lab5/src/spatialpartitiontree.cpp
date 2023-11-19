@@ -152,6 +152,29 @@ bool SpatialPartitionTree2D::in_bounds(const Particle& particle) const {
   return px >= 0 && px <= size_ && py >= 0 && py <= size_;
 }
 
+void SpatialPartitionTree2D::reset() {
+  std::stack<Node*> nodes;
+  Node *node;
+
+  nodes.push(root_);
+
+  while (!nodes.empty()) {
+    node = nodes.top();
+    nodes.pop();
+
+    if (node == nullptr) {
+      continue;
+    }
+
+    node->qty_ = 0;
+
+    nodes.push(node->nw_);
+    nodes.push(node->ne_);
+    nodes.push(node->sw_);
+    nodes.push(node->se_);
+  }
+}
+
 SpatialPartitionTree2D::Node::Node(double x, double y, double size)
   : x_{x}, y_{y}, size_{size}
 {}
@@ -208,10 +231,14 @@ std::string SpatialPartitionTree2D::Node::to_string() const {
 
 void SpatialPartitionTree2D::Node::subdivide() {
   double half_size = size_ / 2;
-  nw_ = new Node{x_, y_, half_size};
-  ne_ = new Node{x_ + half_size, y_, half_size};
-  sw_ = new Node{x_, y_ + half_size, half_size};
-  se_ = new Node{x_ + half_size, y_ + half_size, half_size};
+
+  // Subregions are either all allocated or all nullptr.
+  if (nw_ == nullptr) {
+    nw_ = new Node{x_, y_, half_size};
+    ne_ = new Node{x_ + half_size, y_, half_size};
+    sw_ = new Node{x_, y_ + half_size, half_size};
+    se_ = new Node{x_ + half_size, y_ + half_size, half_size};
+  }
 }
 
 SpatialPartitionTree2D::Node *SpatialPartitionTree2D::Node::get_subregion(const Particle& particle) const {
