@@ -128,6 +128,13 @@ void SpatialPartitionTree2D::Node::put(const Particle& particle) {
   get_subregion(particle)->put(particle);
 }
 
+std::string SpatialPartitionTree2D::Node::to_string() const {
+  const int size{256};
+  char buf[size];
+  snprintf(buf, size, "Node(x=%f, y=%f, size=%f, com=%s, qty=%d)", x_, y_, size_, com_.to_string().c_str(), qty_);
+  return {buf};
+}
+
 void SpatialPartitionTree2D::Node::subdivide() {
   double half_size = size_ / 2;
   nw_ = new Node{x_, y_, half_size};
