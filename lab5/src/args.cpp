@@ -12,6 +12,8 @@ Args::Args(int argc, char **argv) {
       input_ = *(++it);
     } else if (arg == "-o") {
       output_ = *(++it);
+    } else if (arg == "-g") {
+      gravity_ = std::stod(*(++it));
     } else if (arg == "-s") {
       steps_ = std::stoi(*(++it));
     } else if (arg == "-t") {
@@ -36,6 +38,10 @@ std::string Args::output() const {
 
 int Args::steps() const {
   return steps_;
+}
+
+double Args::gravity() const {
+  return gravity_;
 }
 
 double Args::threshold() const {
