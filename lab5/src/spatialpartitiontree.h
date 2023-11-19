@@ -10,6 +10,7 @@ class SpatialPartitionTree2D {
 
     void put(const Particle& particle);
     void traverse();
+    void compute_centers();
 
   private:
     class Node;

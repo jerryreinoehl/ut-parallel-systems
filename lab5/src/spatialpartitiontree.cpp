@@ -1,6 +1,7 @@
 #include "spatialpartitiontree.h"
 
 #include <stack>
+#include <queue>
 
 SpatialPartitionTree2D::SpatialPartitionTree2D(double size) : size_(size) {
   root_ = new Node{0, 0, size_};
@@ -48,6 +49,64 @@ void SpatialPartitionTree2D::traverse() {
       nodes.push(node->sw_);
       nodes.push(node->se_);
     }
+  }
+}
+
+void SpatialPartitionTree2D::compute_centers() {
+  std::queue<Node*> children;
+  std::stack<Node*> nodes;
+  Node *node;
+
+  children.push(root_);
+
+  // Place nodes on stack, deepest nodes on top.
+  while (!children.empty()) {
+    node = children.front();
+    children.pop();
+
+    nodes.push(node);
+    if (node->qty_ > 1) {
+      children.push(node->nw_);
+      children.push(node->ne_);
+      children.push(node->sw_);
+      children.push(node->se_);
+    }
+  }
+
+  double nw_x, ne_x, sw_x, se_x;
+  double nw_y, ne_y, sw_y, se_y;
+  double nw_mass, ne_mass, sw_mass, se_mass;
+  double mass;
+
+  while (!nodes.empty()) {
+    node = nodes.top();
+    nodes.pop();
+
+    if (node->qty_ <= 1) {
+      continue;
+    }
+
+    nw_mass = node->nw_->com_.get_mass();
+    nw_x = nw_mass * node->nw_->com_.get_x();
+    nw_y = nw_mass * node->nw_->com_.get_y();
+
+    ne_mass = node->ne_->com_.get_mass();
+    ne_x = ne_mass * node->ne_->com_.get_x();
+    ne_y = ne_mass * node->ne_->com_.get_y();
+
+    sw_mass = node->sw_->com_.get_mass();
+    sw_x = sw_mass * node->sw_->com_.get_x();
+    sw_y = sw_mass * node->sw_->com_.get_y();
+
+    se_mass = node->se_->com_.get_mass();
+    se_x = se_mass * node->se_->com_.get_x();
+    se_y = se_mass * node->se_->com_.get_y();
+
+    mass = nw_mass + ne_mass + sw_mass + se_mass;
+
+    node->com_.set_x((nw_x + ne_x + sw_x + se_x) / mass);
+    node->com_.set_y((nw_y + ne_y + sw_y + se_y) / mass);
+    node->com_.set_mass(mass);
   }
 }
 
