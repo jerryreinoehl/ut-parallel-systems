@@ -38,6 +38,10 @@ SpatialPartitionTree2D::~SpatialPartitionTree2D() {
 }
 
 void SpatialPartitionTree2D::put(const Particle& particle) {
+  if (!in_bounds(particle)) {
+    return;
+  }
+
   root_->put(particle);
 }
 
@@ -141,6 +145,11 @@ Vector2D SpatialPartitionTree2D::compute_force(const Particle& particle, double 
   }
 
   return {force_x, force_y};
+}
+
+bool SpatialPartitionTree2D::in_bounds(const Particle& particle) const {
+  double px = particle.get_x(), py = particle.get_y();
+  return px >= 0 && px <= size_ && py >= 0 && py <= size_;
 }
 
 SpatialPartitionTree2D::Node::Node(double x, double y, double size)

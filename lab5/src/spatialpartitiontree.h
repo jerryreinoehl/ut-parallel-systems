@@ -24,6 +24,8 @@ class SpatialPartitionTree2D {
 
     double size_;
     Node *root_;
+
+    bool in_bounds(const Particle& particle) const;
 };
 
 class SpatialPartitionTree2D::Node {
