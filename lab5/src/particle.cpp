@@ -8,27 +8,27 @@ Particle::Particle(int id, double x, double y, double mass, double dx, double dy
   : id_(id), x_(x), y_(y), mass_(mass), dx_(dx), dy_(dy)
 { }
 
-int Particle::get_id() const {
+int Particle::id() const {
   return id_;
 }
 
-double Particle::get_x() const {
+double Particle::x() const {
   return x_;
 }
 
-double Particle::get_y() const {
+double Particle::y() const {
   return y_;
 }
 
-double Particle::get_mass() const {
+double Particle::mass() const {
   return mass_;
 }
 
-double Particle::get_dx() const {
+double Particle::dx() const {
   return dx_;
 }
 
-double Particle::get_dy() const {
+double Particle::dy() const {
   return dy_;
 }
 

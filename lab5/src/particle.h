@@ -9,12 +9,12 @@ class Particle {
     Particle();
     Particle(int id, double x, double y, double mass, double dx, double dy);
 
-    int get_id() const;
-    double get_x() const;
-    double get_y() const;
-    double get_mass() const;
-    double get_dx() const;
-    double get_dy() const;
+    int id() const;
+    double x() const;
+    double y() const;
+    double mass() const;
+    double dx() const;
+    double dy() const;
 
     void set_x(double x);
     void set_y(double y);

@@ -131,9 +131,9 @@ Vector2D SpatialPartitionTree2D::compute_force(const Particle& particle, double 
     }
 
     if (node->qty_ == 1 || node->size_ / dist < threshold) {
-      dx = std::abs(particle.get_x() - node->com_.get_x());
-      dy = std::abs(particle.get_y() - node->com_.get_y());
-      gmm_d3 = gravity * particle.get_mass() * node->com_.get_mass() / (dist * dist * dist);
+      dx = std::abs(particle.x() - node->com_.x());
+      dy = std::abs(particle.y() - node->com_.y());
+      gmm_d3 = gravity * particle.mass() * node->com_.mass() / (dist * dist * dist);
       force_x += gmm_d3 * dx;
       force_y += gmm_d3 * dy;
     } else {
@@ -148,7 +148,7 @@ Vector2D SpatialPartitionTree2D::compute_force(const Particle& particle, double 
 }
 
 bool SpatialPartitionTree2D::in_bounds(const Particle& particle) const {
-  double px = particle.get_x(), py = particle.get_y();
+  double px = particle.x(), py = particle.y();
   return px >= 0 && px <= size_ && py >= 0 && py <= size_;
 }
 
@@ -176,21 +176,21 @@ void SpatialPartitionTree2D::Node::compute_center() {
   double nw_mass, ne_mass, sw_mass, se_mass;
   double mass;
 
-  nw_mass = nw_->com_.get_mass();
-  nw_x = nw_mass * nw_->com_.get_x();
-  nw_y = nw_mass * nw_->com_.get_y();
+  nw_mass = nw_->com_.mass();
+  nw_x = nw_mass * nw_->com_.x();
+  nw_y = nw_mass * nw_->com_.y();
 
-  ne_mass = ne_->com_.get_mass();
-  ne_x = ne_mass * ne_->com_.get_x();
-  ne_y = ne_mass * ne_->com_.get_y();
+  ne_mass = ne_->com_.mass();
+  ne_x = ne_mass * ne_->com_.x();
+  ne_y = ne_mass * ne_->com_.y();
 
-  sw_mass = sw_->com_.get_mass();
-  sw_x = sw_mass * sw_->com_.get_x();
-  sw_y = sw_mass * sw_->com_.get_y();
+  sw_mass = sw_->com_.mass();
+  sw_x = sw_mass * sw_->com_.x();
+  sw_y = sw_mass * sw_->com_.y();
 
-  se_mass = se_->com_.get_mass();
-  se_x = se_mass * se_->com_.get_x();
-  se_y = se_mass * se_->com_.get_y();
+  se_mass = se_->com_.mass();
+  se_x = se_mass * se_->com_.x();
+  se_y = se_mass * se_->com_.y();
 
   mass = nw_mass + ne_mass + sw_mass + se_mass;
 
@@ -215,7 +215,7 @@ void SpatialPartitionTree2D::Node::subdivide() {
 }
 
 SpatialPartitionTree2D::Node *SpatialPartitionTree2D::Node::get_subregion(const Particle& particle) const {
-  double px = particle.get_x(), py = particle.get_y();
+  double px = particle.x(), py = particle.y();
   double half_size = size_ / 2;
 
   if (px <= x_ + half_size && py <= y_ + half_size) {
