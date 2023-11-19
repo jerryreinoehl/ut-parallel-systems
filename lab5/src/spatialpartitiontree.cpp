@@ -99,7 +99,6 @@ Vector2D SpatialPartitionTree2D::compute_force(const Particle& particle, double 
   double dx, dy;  // delta-x, -y
   double gmm_d3;  // G * M0 * M1 / d^3
   double force_x = 0, force_y = 0;
-  int computations{};
 
   nodes.push(root_);
 
@@ -123,7 +122,6 @@ Vector2D SpatialPartitionTree2D::compute_force(const Particle& particle, double 
       gmm_d3 = gravity * particle.get_mass() * node->com_.get_mass() / (dist * dist * dist);
       force_x += gmm_d3 * dx;
       force_y += gmm_d3 * dy;
-      computations++;
     } else {
       nodes.push(node->nw_);
       nodes.push(node->ne_);
