@@ -42,7 +42,27 @@ void SpatialPartitionTree2D::put(const Particle& particle) {
     return;
   }
 
-  root_->put(particle);
+  Node *node = root_;
+  Node *subregion;
+
+  while (true) {
+    if (node->qty_ == 0) {
+      node->com_ = particle;
+      node->qty_ = 1;
+      return;
+    }
+
+    if (node->qty_ == 1) {
+      node->subdivide();
+      subregion = node->get_subregion(node->com_);
+      subregion->qty_ = 1;
+      subregion->com_ = node->com_;
+    }
+
+    node->qty_++;
+    subregion = node->get_subregion(particle);
+    node = subregion;
+  }
 }
 
 void SpatialPartitionTree2D::put(const std::vector<Particle>& particles) {
@@ -178,20 +198,6 @@ void SpatialPartitionTree2D::reset() {
 SpatialPartitionTree2D::Node::Node(double x, double y, double size)
   : x_{x}, y_{y}, size_{size}
 {}
-
-void SpatialPartitionTree2D::Node::put(const Particle& particle) {
-  if (qty_ == 0) {
-    com_ = particle;
-    qty_++;
-    return;
-  } else if (qty_ == 1) {
-    subdivide();
-    get_subregion(com_)->put(com_);
-  }
-
-  qty_++;
-  get_subregion(particle)->put(particle);
-}
 
 void SpatialPartitionTree2D::Node::compute_center() {
   double nw_x, ne_x, sw_x, se_x;
