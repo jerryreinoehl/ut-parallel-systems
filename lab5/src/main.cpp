@@ -1,19 +1,47 @@
 #include "main.h"
 #include "args.h"
 #include "spatialpartitiontree.h"
+#include "vector2d.h"
 
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <ctime>
 
 int main(int argc, char **argv) {
   Args args{argc, argv};
 
-  std::vector<Particle> particles = read_particles(args.input());
+  const double size = 4;
+  double gravity = args.gravity();
+  double threshold = args.threshold();
+  double timestep = args.timestep();
 
-  for (const auto& particle : particles) {
-    std::cout << particle << '\n';
+  SpatialPartitionTree2D spt{size};
+  std::vector<Particle> particles = read_particles(args.input());
+  Vector2D force;
+
+  clock_t start = clock(), end;
+
+  for (int step = 0; step < args.steps(); step++) {
+    spt.reset();
+    spt.put(particles);
+    spt.compute_centers();
+
+    for (auto& particle : particles) {
+      if (!spt.in_bounds(particle)) {
+        particle.set_mass(-1);
+        continue;
+      }
+
+      force = spt.compute_force(particle, threshold, gravity);
+      particle.apply_force(force, timestep);
+    }
   }
+
+  end = clock();
+  std::cout << std::setprecision(6) << ((double)end - start) / CLOCKS_PER_SEC << '\n';
+
+  write_particles(args.output(), particles);
 
   return 0;
 }
