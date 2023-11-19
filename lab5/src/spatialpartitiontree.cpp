@@ -91,6 +91,50 @@ void SpatialPartitionTree2D::compute_centers() {
   }
 }
 
+Vector2D SpatialPartitionTree2D::compute_force(const Particle& particle, double threshold, double gravity) const {
+  std::stack<Node*> nodes;
+  Node *node;
+
+  double dist;
+  double dx, dy;  // delta-x, -y
+  double gmm_d3;  // G * M0 * M1 / d^3
+  double force_x = 0, force_y = 0;
+  int computations{};
+
+  nodes.push(root_);
+
+  while (!nodes.empty()) {
+    node = nodes.top();
+    nodes.pop();
+
+    if (node->qty_ == 0) {
+      continue;
+    }
+
+    dist = particle.distance_to(node->com_);
+
+    if (dist == 0) {
+      continue;
+    }
+
+    if (node->qty_ == 1 || node->size_ / dist < threshold) {
+      dx = std::abs(particle.get_x() - node->com_.get_x());
+      dy = std::abs(particle.get_y() - node->com_.get_y());
+      gmm_d3 = gravity * particle.get_mass() * node->com_.get_mass() / (dist * dist * dist);
+      force_x += gmm_d3 * dx;
+      force_y += gmm_d3 * dy;
+      computations++;
+    } else {
+      nodes.push(node->nw_);
+      nodes.push(node->ne_);
+      nodes.push(node->sw_);
+      nodes.push(node->se_);
+    }
+  }
+
+  return {force_x, force_y};
+}
+
 SpatialPartitionTree2D::Node::Node(double x, double y, double size)
   : x_{x}, y_{y}, size_{size}
 {}

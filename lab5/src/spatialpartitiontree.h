@@ -1,6 +1,9 @@
 #pragma once
 
 #include "particle.h"
+#include "vector2d.h"
+
+#include <vector>
 
 class SpatialPartitionTree2D {
   public:
@@ -9,8 +12,11 @@ class SpatialPartitionTree2D {
     ~SpatialPartitionTree2D();
 
     void put(const Particle& particle);
+    void put(const std::vector<Particle>& particles);
     void traverse();
     void compute_centers();
+
+    Vector2D compute_force(const Particle& particle, double threshold, double gravity) const;
 
   private:
     class Node;
