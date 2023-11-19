@@ -41,11 +41,11 @@ class SpatialPartitionTree2D::Node {
     double y_;
     double size_;  // Length and width of this region.
     Particle com_; // Center of mass.
-    int qty_{0};   // Number of bodies in this region.
-    Node *nw_{nullptr};
-    Node *ne_{nullptr};
-    Node *sw_{nullptr};
-    Node *se_{nullptr};
+    int qty_{};    // Number of bodies in this region.
+    Node *nw_{};
+    Node *ne_{};
+    Node *sw_{};
+    Node *se_{};
 
     void subdivide();
     Node *get_subregion(const Particle& particle) const;

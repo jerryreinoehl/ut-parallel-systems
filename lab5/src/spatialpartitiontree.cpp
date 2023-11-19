@@ -22,15 +22,19 @@ SpatialPartitionTree2D::~SpatialPartitionTree2D() {
     node = nodes.top();
     nodes.pop();
 
-    if (node != nullptr) {
-      nodes.push(node->nw_);
-      nodes.push(node->ne_);
-      nodes.push(node->sw_);
-      nodes.push(node->se_);
+    if (node == nullptr) {
+      continue;
     }
+
+    nodes.push(node->nw_);
+    nodes.push(node->ne_);
+    nodes.push(node->sw_);
+    nodes.push(node->se_);
 
     delete node;
   }
+
+  root_ = nullptr;
 }
 
 void SpatialPartitionTree2D::put(const Particle& particle) {
