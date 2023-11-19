@@ -1,5 +1,7 @@
 #pragma once
 
+#include "vector2d.h"
+
 #include <iostream>
 
 class Particle {
@@ -19,6 +21,9 @@ class Particle {
     void set_mass(double mass);
     void set_dx(double dx);
     void set_dy(double dy);
+
+    double distance_to(const Particle& particle) const;
+    Vector2D force(const Particle& particle, double gravity) const;
 
     std::string to_string() const;
 

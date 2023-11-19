@@ -1,5 +1,7 @@
 #include "particle.h"
 
+#include <cmath>
+
 Particle::Particle() {}
 
 Particle::Particle(int id, double x, double y, double mass, double dx, double dy)
@@ -48,6 +50,33 @@ void Particle::set_dx(double dx) {
 
 void Particle::set_dy(double dy) {
   dy_ = dy;
+}
+
+double Particle::distance_to(const Particle& particle) const {
+  double diff_x = particle.x_ - x_;
+  double diff_y = particle.y_ - y_;
+  return std::sqrt(diff_x * diff_x + diff_y * diff_y);
+}
+
+Vector2D Particle::force(const Particle& particle, double gravity) const {
+  double dx, dy; // delta-x, -y
+  double dist;
+  double force_x, force_y;
+  double gmm_d3; // G * M0 * M1 / d^3
+
+  dx = std::abs(particle.x_ - x_);
+  dy = std::abs(particle.y_ - y_);
+  dist = std::sqrt(dx * dx + dy * dy);
+
+  if (dist == 0) {
+    return {0, 0};
+  }
+
+  gmm_d3 = gravity * mass_ * particle.mass_ / (dist * dist * dist);
+  force_x = gmm_d3 * dx;
+  force_y = gmm_d3 * dy;
+
+  return {force_x, force_y};
 }
 
 std::string Particle::to_string() const {
