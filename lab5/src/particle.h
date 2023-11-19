@@ -24,6 +24,7 @@ class Particle {
 
     double distance_to(const Particle& particle) const;
     Vector2D force(const Particle& particle, double gravity) const;
+    void apply_force(const Vector2D& force, double dt);
 
     std::string to_string() const;
 

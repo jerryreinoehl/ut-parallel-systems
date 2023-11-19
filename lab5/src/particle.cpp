@@ -79,6 +79,19 @@ Vector2D Particle::force(const Particle& particle, double gravity) const {
   return {force_x, force_y};
 }
 
+void Particle::apply_force(const Vector2D& force, double dt) {
+  double acc_x, acc_y; // Acceleration in each dimension.
+
+  acc_x = force.x() / mass_;
+  acc_y = force.y() / mass_;
+
+  x_ = x_ + dx_ * dt * 0.5 * acc_x * dt * dt;
+  y_ = y_ + dy_ * dt * 0.5 * acc_y * dt * dt;
+
+  dx_ = dx_ + acc_x * dt;
+  dy_ = dy_ + acc_y * dt;
+}
+
 std::string Particle::to_string() const {
   char buf[128];
   snprintf(buf, 128, "Particle(id=%d, x=%f, y=%f, mass=%f, dx=%f, dy=%f)", id_, x_, y_, mass_, dx_, dy_);
