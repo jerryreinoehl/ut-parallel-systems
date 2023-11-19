@@ -30,6 +30,26 @@ double Particle::get_dy() const {
   return dy_;
 }
 
+void Particle::set_x(double x) {
+  x_ = x;
+}
+
+void Particle::set_y(double y) {
+  y_ = y;
+}
+
+void Particle::set_mass(double mass) {
+  mass_ = mass;
+}
+
+void Particle::set_dx(double dx) {
+  dx_ = dx;
+}
+
+void Particle::set_dy(double dy) {
+  dy_ = dy;
+}
+
 std::string Particle::to_string() const {
   char buf[128];
   snprintf(buf, 128, "Particle(id=%d, x=%f, y=%f, mass=%f, dx=%f, dy=%f)", id_, x_, y_, mass_, dx_, dy_);

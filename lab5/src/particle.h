@@ -14,6 +14,12 @@ class Particle {
     double get_dx() const;
     double get_dy() const;
 
+    void set_x(double x);
+    void set_y(double y);
+    void set_mass(double mass);
+    void set_dx(double dx);
+    void set_dy(double dy);
+
     std::string to_string() const;
 
   private:
