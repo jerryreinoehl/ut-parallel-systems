@@ -31,6 +31,12 @@ void SpatialPartitionTree2D::put(const Particle& particle) {
   root_->put(particle);
 }
 
+void SpatialPartitionTree2D::put(const std::vector<Particle>& particles) {
+  for (const auto& particle: particles) {
+    put(particle);
+  }
+}
+
 void SpatialPartitionTree2D::traverse() {
   std::stack<Node*> nodes;
   Node *node;
