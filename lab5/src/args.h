@@ -8,6 +8,7 @@ class Args {
     double DEFAULT_GRAVITY = 0.0001;
     double DEFAULT_THRESHOLD = 1.0;
     double DEFAULT_TIMESTEP = 0.005;
+    double DEFAULT_RLIMIT = 0.03;
     bool DEFAULT_VISUAL = false;
 
     Args(int argc, char **argv);
@@ -18,6 +19,7 @@ class Args {
     double gravity() const;
     double threshold() const;
     double timestep() const;
+    double rlimit() const;
     bool visual() const;
 
   private:
@@ -27,6 +29,7 @@ class Args {
     double gravity_{DEFAULT_GRAVITY};
     double threshold_{DEFAULT_THRESHOLD};
     double timestep_{DEFAULT_TIMESTEP};
+    double rlimit_{DEFAULT_RLIMIT};
     bool visual_{DEFAULT_VISUAL};
 
     void check_args() const;

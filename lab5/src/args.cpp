@@ -20,6 +20,8 @@ Args::Args(int argc, char **argv) {
       threshold_ = std::stod(*(++it));
     } else if (arg == "-d") {
       timestep_ = std::stod(*(++it));
+    } else if (arg == "-r") {
+      rlimit_ = std::stod(*(++it));
     } else if (arg == "-V") {
       visual_ = true;
     }
@@ -50,6 +52,10 @@ double Args::threshold() const {
 
 double Args::timestep() const {
   return timestep_;
+}
+
+double Args::rlimit() const {
+  return rlimit_;
 }
 
 bool Args::visual() const {
