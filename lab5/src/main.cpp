@@ -20,6 +20,7 @@ void seq_barnes_hut(const Args& args) {
   double gravity = args.gravity();
   double threshold = args.threshold();
   double timestep = args.timestep();
+  double rlimit = args.rlimit();
 
   SpatialPartitionTree2D spt{size};
   std::vector<Particle> particles = read_particles(args.input());
@@ -38,7 +39,7 @@ void seq_barnes_hut(const Args& args) {
         continue;
       }
 
-      force = spt.compute_force(particle, threshold, gravity);
+      force = spt.compute_force(particle, threshold, gravity, rlimit);
       particle.apply_force(force, timestep);
     }
   }

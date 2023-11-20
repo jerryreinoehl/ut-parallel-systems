@@ -125,7 +125,9 @@ void SpatialPartitionTree2D::compute_centers() {
   }
 }
 
-Vector2D SpatialPartitionTree2D::compute_force(const Particle& particle, double threshold, double gravity) const {
+Vector2D SpatialPartitionTree2D::compute_force(
+  const Particle& particle, double threshold, double gravity, double rlimit
+) const {
   std::stack<Node*> nodes;
   Node *node;
 
@@ -151,6 +153,10 @@ Vector2D SpatialPartitionTree2D::compute_force(const Particle& particle, double 
     }
 
     if (node->qty_ == 1 || node->size_ / dist < threshold) {
+      if (dist < rlimit) {
+        dist = rlimit;
+      }
+
       dx = node->com_.x() - particle.x();
       dy = node->com_.y() - particle.y();
       gmm_d3 = gravity * particle.mass() * node->com_.mass() / (dist * dist * dist);

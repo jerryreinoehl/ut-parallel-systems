@@ -17,7 +17,7 @@ class SpatialPartitionTree2D {
     void traverse();
     void compute_centers();
 
-    Vector2D compute_force(const Particle& particle, double threshold, double gravity) const;
+    Vector2D compute_force(const Particle& particle, double threshold, double gravity, double rlimit) const;
 
     bool in_bounds(const Particle& particle) const;
 
