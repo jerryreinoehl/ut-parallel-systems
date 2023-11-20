@@ -36,7 +36,7 @@ void seq_barnes_hut(const Args& args, GLFWwindow *window) {
 
   for (int step = 0; step < args.steps(); step++) {
     if (args.visual()) {
-      draw(window, particles);
+      draw(window, particles, spt);
     }
 
     spt.reset();
@@ -125,9 +125,9 @@ GLFWwindow *init_window() {
   return window;
 }
 
-void draw(GLFWwindow *window, const std::vector<Particle>& particles) {
+void draw(GLFWwindow *window, const std::vector<Particle>& particles, const SpatialPartitionTree2D& spt) {
   glClear(GL_COLOR_BUFFER_BIT);
-  drawOctreeBounds2D();
+  drawOctreeBounds2D(spt);
 
   for (const auto& particle : particles) {
     drawParticle2D(particle);
@@ -138,29 +138,47 @@ void draw(GLFWwindow *window, const std::vector<Particle>& particles) {
   glfwPollEvents();
 }
 
-void drawOctreeBounds2D() {
-  glBegin(GL_LINES);
+void drawOctreeBounds2D(const SpatialPartitionTree2D& spt) {
+  double x1, y1, x2, y2;
 
-  // Set the color of lines to be white.
-  glColor3f(1.0f, 1.0f, 1.0f);
+  for (const auto& bounds : spt.bounds()) {
+    glBegin(GL_LINES);
 
-  // Specify the start point's coordinates.
-  glVertex2f(-1, 0);
+    // Set the color of lines to be white.
+    glColor3f(1.0f, 1.0f, 1.0f);
 
-  // Specify the end point's coordinates.
-  glVertex2f(1, 0);
+    x1 = bounds.x();
+    y1 = bounds.y();
+    x2 = x1 + bounds.z();
+    y2 = y1 + bounds.z();
 
-  // Do the same for the verticle line.
-  glVertex2f(0, -1);
-  glVertex2f(0, 1);
+    x1 = 2 * x1 / 4 - 1;
+    x2 = 2 * x2 / 4 - 1;
+    y1 = 2 * y1 / 4 - 1;
+    y2 = 2 * y2 / 4 - 1;
 
-  glEnd();
+    glVertex2f(x1, y1);
+    glVertex2f(x1, y2);
+
+    glVertex2f(x1, y2);
+    glVertex2f(x2, y2);
+
+    glVertex2f(x2, y2);
+    glVertex2f(x2, y1);
+
+    glVertex2f(x2, y1);
+    glVertex2f(x1, y1);
+
+    glEnd();
+  }
 }
 
 void drawParticle2D(const Particle& particle) {
   float x, y;
-  float radius = 0.005 * particle.mass();
-  //radius = 0.001;
+  float radius = 0.002 * particle.mass();
+  if (radius < 0.005) {
+    radius = 0.005;
+  }
 
   x = 2 * particle.x() / 4 - 1;
   y = 2 * particle.y() / 4 - 1;

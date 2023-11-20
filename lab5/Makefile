@@ -1,7 +1,7 @@
 CC := g++
 CFLAGS := -std=c++17 -O2 -Wall -Werror -Wextra
 SRC = ./src/*.cpp
-OBJ = main.o args.o particle.o spatialpartitiontree.o vector2d.o
+OBJ = main.o args.o particle.o spatialpartitiontree.o vector2d.o vector3d.o
 INC = ./src/
 LIB = -lGL -lGLEW -lglfw -lglut
 

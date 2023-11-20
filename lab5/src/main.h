@@ -2,6 +2,7 @@
 
 #include "args.h"
 #include "particle.h"
+#include "spatialpartitiontree.h"
 
 #include <string>
 #include <vector>
@@ -19,6 +20,6 @@ std::vector<Particle> read_particles(const std::string& filename);
 void write_particles(const std::string& filename, const std::vector<Particle>& particles);
 
 GLFWwindow *init_window();
-void draw(GLFWwindow *window, const std::vector<Particle>& particles);
-void drawOctreeBounds2D();
+void draw(GLFWwindow *window, const std::vector<Particle>& particles, const SpatialPartitionTree2D& spt);
+void drawOctreeBounds2D(const SpatialPartitionTree2D& spt);
 void drawParticle2D(const Particle& particle);
