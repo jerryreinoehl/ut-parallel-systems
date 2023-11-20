@@ -201,6 +201,32 @@ void SpatialPartitionTree2D::reset() {
   }
 }
 
+std::vector<Vector3D> SpatialPartitionTree2D::bounds() const {
+  std::vector<Vector3D> bounds;
+  std::queue<Node*> nodes;
+  Node *node;
+
+  nodes.push(root_);
+
+  while (!nodes.empty()) {
+    node = nodes.front();
+    nodes.pop();
+
+    if (node == nullptr || node->qty_ == 0) {
+      continue;
+    }
+
+    bounds.push_back({node->x_, node->y_, node->size_});
+
+    nodes.push(node->nw_);
+    nodes.push(node->ne_);
+    nodes.push(node->sw_);
+    nodes.push(node->se_);
+  }
+
+  return bounds;
+}
+
 SpatialPartitionTree2D::Node::Node(double x, double y, double size)
   : x_{x}, y_{y}, size_{size}
 {}

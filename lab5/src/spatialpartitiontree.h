@@ -2,6 +2,7 @@
 
 #include "particle.h"
 #include "vector2d.h"
+#include "vector3d.h"
 
 #include <vector>
 
@@ -25,6 +26,8 @@ class SpatialPartitionTree2D {
     // this is much faster than creating a new one and reallocating new nodes, however,
     // this may increase memory use.
     void reset();
+
+    std::vector<Vector3D> bounds() const;
 
   private:
     class Node;
