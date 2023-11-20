@@ -99,7 +99,7 @@ void write_particles(const std::string& filename, const std::vector<Particle>& p
 }
 
 GLFWwindow *init_window() {
-  const int width = 600, height = 600;
+  const int width = 800, height = 800;
   GLFWwindow *window;
 
   if (!glfwInit()) {
