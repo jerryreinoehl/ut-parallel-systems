@@ -25,7 +25,7 @@ void seq_barnes_hut(const Args& args) {
   std::vector<Particle> particles = read_particles(args.input());
   Vector2D force;
 
-  clock_t start = clock(), end;
+  clock_t start = std::clock(), end;
 
   for (int step = 0; step < args.steps(); step++) {
     spt.reset();
@@ -43,7 +43,7 @@ void seq_barnes_hut(const Args& args) {
     }
   }
 
-  end = clock();
+  end = std::clock();
   std::cout << std::setprecision(6) << ((double)end - start) / CLOCKS_PER_SEC << '\n';
 
   write_particles(args.output(), particles);
