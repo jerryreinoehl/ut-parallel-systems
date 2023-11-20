@@ -10,7 +10,12 @@
 
 int main(int argc, char **argv) {
   Args args{argc, argv};
+  seq_barnes_hut(args);
 
+  return 0;
+}
+
+void seq_barnes_hut(const Args& args) {
   const double size = 4;
   double gravity = args.gravity();
   double threshold = args.threshold();
@@ -42,8 +47,6 @@ int main(int argc, char **argv) {
   std::cout << std::setprecision(6) << ((double)end - start) / CLOCKS_PER_SEC << '\n';
 
   write_particles(args.output(), particles);
-
-  return 0;
 }
 
 std::vector<Particle> read_particles(const std::string& filename) {
