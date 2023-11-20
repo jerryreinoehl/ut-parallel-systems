@@ -151,8 +151,8 @@ Vector2D SpatialPartitionTree2D::compute_force(const Particle& particle, double 
     }
 
     if (node->qty_ == 1 || node->size_ / dist < threshold) {
-      dx = std::abs(particle.x() - node->com_.x());
-      dy = std::abs(particle.y() - node->com_.y());
+      dx = node->com_.x() - particle.x();
+      dy = node->com_.y() - particle.y();
       gmm_d3 = gravity * particle.mass() * node->com_.mass() / (dist * dist * dist);
       force_x += gmm_d3 * dx;
       force_y += gmm_d3 * dy;

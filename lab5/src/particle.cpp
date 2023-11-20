@@ -64,8 +64,8 @@ Vector2D Particle::force(const Particle& particle, double gravity) const {
   double force_x, force_y;
   double gmm_d3; // G * M0 * M1 / d^3
 
-  dx = std::abs(particle.x_ - x_);
-  dy = std::abs(particle.y_ - y_);
+  dx = particle.x_ - x_;
+  dy = particle.y_ - y_;
   dist = std::sqrt(dx * dx + dy * dy);
 
   if (dist == 0) {
@@ -85,8 +85,8 @@ void Particle::apply_force(const Vector2D& force, double dt) {
   acc_x = force.x() / mass_;
   acc_y = force.y() / mass_;
 
-  x_ = x_ + dx_ * dt * 0.5 * acc_x * dt * dt;
-  y_ = y_ + dy_ * dt * 0.5 * acc_y * dt * dt;
+  x_ = x_ + dx_ * dt + 0.5 * acc_x * dt * dt;
+  y_ = y_ + dy_ * dt + 0.5 * acc_y * dt * dt;
 
   dx_ = dx_ + acc_x * dt;
   dy_ = dy_ + acc_y * dt;
