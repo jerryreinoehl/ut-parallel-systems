@@ -22,7 +22,7 @@ class Args {
 
   private:
     std::string input_;
-    std::string output_;
+    std::string output_{"/dev/stdout"};
     int steps_{DEFAULT_STEPS};
     double gravity_{DEFAULT_GRAVITY};
     double threshold_{DEFAULT_THRESHOLD};
