@@ -19,9 +19,8 @@ int main(int argc, char **argv) {
   if (args.sequential()) {
     seq_barnes_hut(args, window);
   } else {
-    MPI_Init(&argc, &argv);
-    mpi_barnes_hut();
-    MPI_Finalize();
+    auto ctx = mpi::init(&argc, &argv);
+    mpi_barnes_hut(args);
   }
 
   return 0;
@@ -66,8 +65,47 @@ void seq_barnes_hut(const Args& args, GLFWwindow *window) {
   write_particles(args.output(), particles);
 }
 
-void mpi_barnes_hut() {
-  
+void mpi_barnes_hut(const Args& args) {
+  int rank = mpi::rank();
+
+  const double size = 4;
+  double gravity = args.gravity();
+  double threshold = args.threshold();
+  double timestep = args.timestep();
+  double rlimit = args.rlimit();
+
+  SpatialPartitionTree2D spt{size};
+  std::vector<Particle> particles = read_particles(args.input());
+  Vector2D force;
+
+  clock_t start, end;
+  if (rank == 0) {
+    start = std::clock();
+  }
+
+  for (int step = 0; step < args.steps(); step++) {
+    spt.reset();
+    spt.put(particles);
+    spt.compute_centers();
+
+    for (auto& particle : particles) {
+      if (!spt.in_bounds(particle)) {
+        particle.set_mass(-1);
+        continue;
+      }
+
+      force = spt.compute_force(particle, threshold, gravity, rlimit);
+      particle.apply_force(force, timestep);
+    }
+  }
+
+  mpi::barrier();
+
+  if (rank == 0) {
+    end = std::clock();
+    std::cout << std::setprecision(6) << ((double)end - start) / CLOCKS_PER_SEC << '\n';
+    write_particles(args.output(), particles);
+  }
 }
 
 std::vector<Particle> read_particles(const std::string& filename) {
