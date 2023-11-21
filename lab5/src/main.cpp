@@ -67,6 +67,8 @@ void seq_barnes_hut(const Args& args, GLFWwindow *window) {
 
 void mpi_barnes_hut(const Args& args) {
   int rank = mpi::rank();
+  int num_procs = mpi::size();
+  mpi::MessageGroup mg;
 
   const double size = 4;
   double gravity = args.gravity();
@@ -76,7 +78,13 @@ void mpi_barnes_hut(const Args& args) {
 
   SpatialPartitionTree2D spt{size};
   std::vector<Particle> particles = read_particles(args.input());
+  Particle *particle;
+  int num_particles = particles.size();
+  int part_start, part_end;
   Vector2D force;
+
+  part_start = num_particles * rank / num_procs;
+  part_end = num_particles * (rank + 1) / num_procs;
 
   clock_t start, end;
   if (rank == 0) {
@@ -88,18 +96,25 @@ void mpi_barnes_hut(const Args& args) {
     spt.put(particles);
     spt.compute_centers();
 
-    for (auto& particle : particles) {
-      if (!spt.in_bounds(particle)) {
-        particle.set_mass(-1);
+    for (int i = part_start; i < part_end; i++) {
+      particle = &particles[i];
+      if (!spt.in_bounds(*particle)) {
+        particle->set_mass(-1);
         continue;
       }
 
-      force = spt.compute_force(particle, threshold, gravity, rlimit);
-      particle.apply_force(force, timestep);
+      force = spt.compute_force(*particle, threshold, gravity, rlimit);
+      particle->apply_force(force, timestep);
     }
-  }
 
-  mpi::barrier();
+    for (int i = 0; i < num_procs; i++) {
+      int pstart = num_particles * i / num_procs;
+      int pend = num_particles * (i + 1) / num_procs;
+      mg.broadcast(&particles[pstart], pend - pstart, i);
+    }
+
+    mg.wait();
+  }
 
   if (rank == 0) {
     end = std::clock();
