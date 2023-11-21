@@ -152,10 +152,11 @@ void drawOctreeBounds2D(const SpatialPartitionTree2D& spt) {
     x2 = x1 + bounds.z();
     y2 = y1 + bounds.z();
 
-    x1 = 2 * x1 / 4 - 1;
-    x2 = 2 * x2 / 4 - 1;
-    y1 = 2 * y1 / 4 - 1;
-    y2 = 2 * y2 / 4 - 1;
+    // Transform bounds to fit on grid (-1, 1).
+    x1 = x1 / 2 - 1;
+    x2 = x2 / 2 - 1;
+    y1 = y1 / 2 - 1;
+    y2 = y2 / 2 - 1;
 
     glVertex2f(x1, y1);
     glVertex2f(x1, y2);
@@ -180,8 +181,8 @@ void drawParticle2D(const Particle& particle) {
     radius = 0.005;
   }
 
-  x = 2 * particle.x() / 4 - 1;
-  y = 2 * particle.y() / 4 - 1;
+  x = particle.x() / 2 - 1;
+  y = particle.y() / 2 - 1;
 
   glBegin(GL_TRIANGLE_FAN);
   glColor3f(0.0f, 0.67f, 1.0f);
