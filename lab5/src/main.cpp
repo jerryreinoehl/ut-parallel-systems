@@ -12,14 +12,9 @@
 
 int main(int argc, char **argv) {
   Args args{argc, argv};
-  GLFWwindow *window{};
-
-  if (args.visual()) {
-    window = init_window();
-  }
 
   if (args.sequential()) {
-    seq_barnes_hut(args, window);
+    seq_barnes_hut(args);
   } else {
     auto ctx = mpi::init(&argc, &argv);
     mpi_barnes_hut(args);
@@ -28,12 +23,17 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-void seq_barnes_hut(const Args& args, GLFWwindow *window) {
+void seq_barnes_hut(const Args& args) {
   const double size = 4;
   double gravity = args.gravity();
   double threshold = args.threshold();
   double timestep = args.timestep();
   double rlimit = args.rlimit();
+  GLFWwindow *window{};
+
+  if (args.visual()) {
+    window = init_window();
+  }
 
   SpatialPartitionTree2D spt{size};
   std::vector<Particle> particles = read_particles(args.input());
@@ -72,6 +72,7 @@ void mpi_barnes_hut(const Args& args) {
   int rank = mpi::rank();
   int num_procs = mpi::size();
   mpi::MessageGroup mg;
+  GLFWwindow *window{};
 
   const double size = 4;
   double gravity = args.gravity();
@@ -85,6 +86,12 @@ void mpi_barnes_hut(const Args& args) {
   int num_particles;
   int part_start, part_end;
   Vector2D force;
+
+  bool visualize = rank == 0 && args.visual();
+
+  if (visualize) {
+    window = init_window();
+  }
 
   // First process reads particles and broadcasts to others.
   if (rank == 0) {
@@ -107,6 +114,10 @@ void mpi_barnes_hut(const Args& args) {
   auto start = std::chrono::high_resolution_clock::now();
 
   for (int step = 0; step < args.steps(); step++) {
+    if (visualize) {
+      draw(window, particles, spt);
+    }
+
     spt.reset();
     spt.put(particles);
     spt.compute_centers();

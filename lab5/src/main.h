@@ -18,7 +18,7 @@
 #include <mpi.h>
 #include "mpi.h"
 
-void seq_barnes_hut(const Args& args, GLFWwindow *window);
+void seq_barnes_hut(const Args& args);
 void mpi_barnes_hut(const Args& args);
 
 std::vector<Particle> read_particles(const std::string& filename);
