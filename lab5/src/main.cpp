@@ -63,7 +63,7 @@ void seq_barnes_hut(const Args& args, GLFWwindow *window) {
 
   auto end = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-  std::cout << std::setprecision(6) << (double) duration / 1'000'000'000 << '\n';
+  std::cout << std::setprecision(8) << (double) duration / 1'000'000'000 << '\n';
 
   write_particles(args.output(), particles);
 }
@@ -134,7 +134,7 @@ void mpi_barnes_hut(const Args& args) {
   if (rank == 0) {
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-    std::cout << std::setprecision(6) << (double) duration / 1'000'000'000 << '\n';
+    std::cout << std::setprecision(8) << (double) duration / 1'000'000'000 << '\n';
     write_particles(args.output(), particles);
   }
 }
