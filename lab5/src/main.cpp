@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <ctime>
 
+#include <chrono>
+
 int main(int argc, char **argv) {
   Args args{argc, argv};
   GLFWwindow *window{};
@@ -37,7 +39,7 @@ void seq_barnes_hut(const Args& args, GLFWwindow *window) {
   std::vector<Particle> particles = read_particles(args.input());
   Vector2D force;
 
-  clock_t start = std::clock(), end;
+  auto start = std::chrono::high_resolution_clock::now();
 
   for (int step = 0; step < args.steps(); step++) {
     if (args.visual()) {
@@ -59,8 +61,9 @@ void seq_barnes_hut(const Args& args, GLFWwindow *window) {
     }
   }
 
-  end = std::clock();
-  std::cout << std::setprecision(6) << ((double)end - start) / CLOCKS_PER_SEC << '\n';
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+  std::cout << std::setprecision(6) << (double) duration / 1'000'000'000 << '\n';
 
   write_particles(args.output(), particles);
 }
@@ -103,10 +106,7 @@ void mpi_barnes_hut(const Args& args) {
   part_start = num_particles * rank / num_procs;
   part_end = num_particles * (rank + 1) / num_procs;
 
-  clock_t start, end;
-  if (rank == 0) {
-    start = std::clock();
-  }
+  auto start = std::chrono::high_resolution_clock::now();
 
   for (int step = 0; step < args.steps(); step++) {
     spt.reset();
@@ -134,8 +134,9 @@ void mpi_barnes_hut(const Args& args) {
   }
 
   if (rank == 0) {
-    end = std::clock();
-    std::cout << std::setprecision(6) << ((double)end - start) / CLOCKS_PER_SEC << '\n';
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    std::cout << std::setprecision(6) << (double) duration / 1'000'000'000 << '\n';
     write_particles(args.output(), particles);
   }
 }
