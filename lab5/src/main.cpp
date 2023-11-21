@@ -92,16 +92,14 @@ void mpi_barnes_hut(const Args& args) {
     num_particles = particles.size();
   }
 
-  mg.broadcast(&num_particles, 1, 0);
-  mg.wait();
+  mpi::broadcast(&num_particles, 1, 0);
 
   // Other processes updates their particles.
   if (rank != 0) {
     particles.resize(num_particles);
   }
 
-  mg.broadcast(&particles[0], num_particles, 0);
-  mg.wait();
+  mpi::broadcast(&particles[0], num_particles, 0);
 
   part_start = num_particles * rank / num_procs;
   part_end = num_particles * (rank + 1) / num_procs;

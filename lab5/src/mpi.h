@@ -12,6 +12,9 @@ namespace mpi {
   int rank(MPI_Comm comm = MPI_COMM_WORLD);
   int size(MPI_Comm comm = MPI_COMM_WORLD);
   int barrier(MPI_Comm comm = MPI_COMM_WORLD);
+
+  template <typename T>
+  int broadcast(T *buffer, int count, int root, MPI_Comm comm = MPI_COMM_WORLD);
 }
 
 class mpi::Ctx {
@@ -42,3 +45,8 @@ class mpi::MessageGroup {
     std::vector<MPI_Request> requests_{};
     std::vector<MPI_Status> statuses_{};
 };
+
+template <typename T>
+int mpi::broadcast(T *buffer, int count, int root, MPI_Comm comm) {
+  return MPI_Bcast(buffer, sizeof(T) * count, MPI_BYTE, root, comm);
+}
