@@ -3,7 +3,7 @@ CFLAGS := -std=c++17 -O2 -Wall -Werror -Wextra
 SRC = ./src/*.cpp
 OBJ = main.o args.o particle.o spatialpartitiontree.o vector2d.o vector3d.o
 INC = -I/src/ -I/opt/mpich/include
-LIB = -lGL -lGLEW -lglfw -lglut -lmpi
+LIB = -L/opt/mpich/lib/ -lGL -lGLEW -lglfw -lglut -lmpi
 
 TARGET := nbody
 
