@@ -10,6 +10,7 @@ class Args {
     double DEFAULT_TIMESTEP = 0.005;
     double DEFAULT_RLIMIT = 0.03;
     bool DEFAULT_VISUAL = false;
+    bool DEFAULT_SEQUENTIAL = false;
 
     Args(int argc, char **argv);
 
@@ -21,6 +22,7 @@ class Args {
     double timestep() const;
     double rlimit() const;
     bool visual() const;
+    bool sequential() const;
 
   private:
     std::string input_;
@@ -31,6 +33,7 @@ class Args {
     double timestep_{DEFAULT_TIMESTEP};
     double rlimit_{DEFAULT_RLIMIT};
     bool visual_{DEFAULT_VISUAL};
+    bool sequential_{DEFAULT_SEQUENTIAL};
 
     void check_args() const;
 };

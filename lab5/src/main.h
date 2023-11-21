@@ -15,7 +15,11 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 
+#include <mpi.h>
+
 void seq_barnes_hut(const Args& args, GLFWwindow *window);
+void mpi_barnes_hut();
+
 std::vector<Particle> read_particles(const std::string& filename);
 void write_particles(const std::string& filename, const std::vector<Particle>& particles);
 

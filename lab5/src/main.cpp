@@ -16,7 +16,13 @@ int main(int argc, char **argv) {
     window = init_window();
   }
 
-  seq_barnes_hut(args, window);
+  if (args.sequential()) {
+    seq_barnes_hut(args, window);
+  } else {
+    MPI_Init(&argc, &argv);
+    mpi_barnes_hut();
+    MPI_Finalize();
+  }
 
   return 0;
 }
@@ -58,6 +64,10 @@ void seq_barnes_hut(const Args& args, GLFWwindow *window) {
   std::cout << std::setprecision(6) << ((double)end - start) / CLOCKS_PER_SEC << '\n';
 
   write_particles(args.output(), particles);
+}
+
+void mpi_barnes_hut() {
+  
 }
 
 std::vector<Particle> read_particles(const std::string& filename) {
