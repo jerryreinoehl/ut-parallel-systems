@@ -2,11 +2,36 @@
 
 #include <mpi.h>
 
+#include <vector>
+
 namespace mpi {
   class Ctx {
     public:
       Ctx(int *argc, char ***argv);
       ~Ctx();
+  };
+
+  class MessageGroup {
+    public:
+      MessageGroup(MPI_Comm = MPI_COMM_WORLD);
+
+      template <typename T>
+      int broadcast(T *buffer, int count, int root) {
+        MPI_Request request;
+        int rc;
+
+        rc = MPI_Ibcast(buffer, sizeof(T) * count, MPI_BYTE, root, comm_, &request);
+        requests_.push_back(request);
+
+        return rc;
+      }
+
+      int wait();
+
+    private:
+      MPI_Comm comm_;
+      std::vector<MPI_Request> requests_{};
+      std::vector<MPI_Status> statuses_{};
   };
 
   Ctx init(int *argc, char ***argv);

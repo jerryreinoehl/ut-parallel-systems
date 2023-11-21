@@ -8,6 +8,19 @@ mpi::Ctx::~Ctx() {
   MPI_Finalize();
 }
 
+mpi::MessageGroup::MessageGroup(MPI_Comm comm) : comm_{comm} {}
+
+int mpi::MessageGroup::wait() {
+  int rc;
+
+  statuses_.clear();
+  statuses_.resize(requests_.size());
+  rc = MPI_Waitall(requests_.size(), &requests_[0], &statuses_[0]);
+  requests_.clear();
+
+  return rc;
+}
+
 mpi::Ctx mpi::init(int *argc, char ***argv) {
   return Ctx{argc, argv};
 }
