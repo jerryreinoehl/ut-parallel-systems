@@ -77,11 +77,28 @@ void mpi_barnes_hut(const Args& args) {
   double rlimit = args.rlimit();
 
   SpatialPartitionTree2D spt{size};
-  std::vector<Particle> particles = read_particles(args.input());
+  std::vector<Particle> particles;
   Particle *particle;
-  int num_particles = particles.size();
+  int num_particles;
   int part_start, part_end;
   Vector2D force;
+
+  // First process reads particles and broadcasts to others.
+  if (rank == 0) {
+    particles = read_particles(args.input());
+    num_particles = particles.size();
+  }
+
+  mg.broadcast(&num_particles, 1, 0);
+  mg.wait();
+
+  // Other processes updates their particles.
+  if (rank != 0) {
+    particles.resize(num_particles);
+  }
+
+  mg.broadcast(&particles[0], num_particles, 0);
+  mg.wait();
 
   part_start = num_particles * rank / num_procs;
   part_end = num_particles * (rank + 1) / num_procs;
