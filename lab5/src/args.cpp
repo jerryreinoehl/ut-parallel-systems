@@ -1,7 +1,7 @@
 #include "args.h"
 
-#include <filesystem>
 #include <iostream>
+#include <sys/stat.h>
 
 Args::Args(int argc, char **argv) {
   std::string arg;
@@ -69,8 +69,10 @@ bool Args::sequential() const {
 }
 
 void Args::check_args() const {
+  struct stat sb;
+
   // Check if input file exists.
-  if (!std::filesystem::exists(input_)) {
+  if (stat(input_.c_str(), &sb) != 0) {
     std::cerr << "Input file doesn't exist.\n";
     exit(1);
   }
