@@ -7,6 +7,8 @@ LIB = -L/opt/mpich/lib/ -lmpi
 
 TARGET := nbody
 
+SUBMISSION := gerald_reinoehl_ger846_lab5.tar.gz
+
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
@@ -32,3 +34,15 @@ visual: $(OBJ) visual.o
 .PHONY: clean
 clean:
 	rm -rf *.o $(TARGET)
+
+.PHONY: submission
+submission:
+	tar -czvf $(SUBMISSION) \
+		--exclude="*.o" --exclude=$(TARGET) \
+		--exclude="*.tar.gz" --exclude="*.tar.zst" \
+		--exclude="reference" \
+		--exclude='data.ods' --exclude=$(SUBMISSION) \
+		--exclude=skeleton-2pc-process.tar \
+		--exclude-vcs \
+		--transform 's|^|gerald_reinoehl_ger846_lab5/|' \
+		*
