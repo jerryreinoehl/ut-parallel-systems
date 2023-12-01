@@ -153,13 +153,16 @@ Vector2D SpatialPartitionTree2D::compute_force(
     }
 
     if (node->qty_ == 1 || node->size_ / dist < threshold) {
+      // Bound `dist` so force doesn't approach infinity.
       if (dist < rlimit) {
-        dist = rlimit;
+        gmm_d3 = gravity * particle.mass() * node->com_.mass() / (rlimit * rlimit * dist);
+      } else {
+        gmm_d3 = gravity * particle.mass() * node->com_.mass() / (dist * dist * dist);
       }
 
       dx = node->com_.x() - particle.x();
       dy = node->com_.y() - particle.y();
-      gmm_d3 = gravity * particle.mass() * node->com_.mass() / (dist * dist * dist);
+
       force_x += gmm_d3 * dx;
       force_y += gmm_d3 * dy;
     } else {
