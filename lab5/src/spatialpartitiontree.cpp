@@ -175,7 +175,7 @@ Vector2D SpatialPartitionTree2D::compute_force(
 
 bool SpatialPartitionTree2D::in_bounds(const Particle& particle) const {
   double px = particle.x(), py = particle.y();
-  return px >= 0 && px <= size_ && py >= 0 && py <= size_;
+  return px > 0 && px < size_ && py > 0 && py < size_;
 }
 
 void SpatialPartitionTree2D::reset() {
